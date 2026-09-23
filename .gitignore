@@ -1,0 +1,27 @@
+# ===== 运行时依赖（不纳入快照，npm install 可复现）=====
+node_modules/
+tools/package-lock.json.bak
+
+# ===== 数据集（体积大，按需 -f 添加清单文件）=====
+data/raw/
+data/datasets/
+!data/datasets/README.md
+
+# ===== 模型权重（体积大，小文件用 git add -f 单独加入）=====
+app/models/*.onnx
+app/models/*.bin
+app/models/*.wasm
+!app/models/manifest.json
+
+# ===== 训练产物 =====
+training/runs/
+*.pt
+*.pth
+!training/**/*.yaml
+
+# ===== 临时 =====
+__pycache__/
+*.pyc
+/tmp/
+.DS_Store
+*.log

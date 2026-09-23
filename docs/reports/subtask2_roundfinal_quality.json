@@ -1,0 +1,138 @@
+{
+ "round": "final",
+ "passed": 26,
+ "total": 26,
+ "all_pass": true,
+ "checks": [
+  {
+   "name": "目录存在 images/train",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "目录存在 images/val",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "目录存在 images/test",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "目录存在 images/eval",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "目录存在 labels/train",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "目录存在 labels/val",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "目录存在 labels/test",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "目录存在 labels/eval",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "dataset.yaml 存在",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "train: 图像标签一一对应",
+   "ok": true,
+   "detail": "缺失0 例:[]"
+  },
+  {
+   "name": "train: 抽样解码+标签合法性",
+   "ok": true,
+   "detail": "抽样1332 异常0"
+  },
+  {
+   "name": "val: 图像标签一一对应",
+   "ok": true,
+   "detail": "缺失0 例:[]"
+  },
+  {
+   "name": "val: 抽样解码+标签合法性",
+   "ok": true,
+   "detail": "抽样125 异常0"
+  },
+  {
+   "name": "test: 图像标签一一对应",
+   "ok": true,
+   "detail": "缺失0 例:[]"
+  },
+  {
+   "name": "test: 抽样解码+标签合法性",
+   "ok": true,
+   "detail": "抽样44 异常0"
+  },
+  {
+   "name": "eval: 图像标签一一对应",
+   "ok": true,
+   "detail": "缺失0 例:[]"
+  },
+  {
+   "name": "eval: 抽样解码+标签合法性",
+   "ok": true,
+   "detail": "抽样301 异常0"
+  },
+  {
+   "name": "总图像数≥7000",
+   "ok": true,
+   "detail": "7212"
+  },
+  {
+   "name": "16类全部出现",
+   "ok": true,
+   "detail": "16类"
+  },
+  {
+   "name": "垃圾类实例占比>25%",
+   "ok": true,
+   "detail": "1551/3045=50.9%"
+  },
+  {
+   "name": "可视化产物 r2_样本预览.png",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "可视化产物 r2_类别统计.png",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "可视化产物 r2_增强对比.png",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "可视化产物 r2_尺寸分布.png",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "数据报告JSON存在",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "划分比例符合配置",
+   "ok": true,
+   "detail": "train占比 88.68%"
+  }
+ ]
+}

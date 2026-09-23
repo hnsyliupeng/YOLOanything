@@ -1,0 +1,540 @@
+{
+  "subtask": 1,
+  "round": "3",
+  "startedAt": "2026-09-23T01:00:14.042Z",
+  "viewports": {
+    "desktop-xl": {
+      "name": "desktop-xl",
+      "width": 1600,
+      "height": 900,
+      "checks": [
+        {
+          "name": "页面加载且应用就绪(ready=true)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "渲染后端",
+          "pass": true,
+          "detail": "backend=webgpu vendor=undefined arch=undefined"
+        },
+        {
+          "name": "画布中心像素非空白(GPU已写入)",
+          "pass": false,
+          "detail": "rgba=0,0,0,0"
+        },
+        {
+          "name": "渲染帧率≥20fps",
+          "pass": true,
+          "detail": "fps=31.0 (SwiftShader软渲染)"
+        },
+        {
+          "name": "控制台零错误",
+          "pass": true,
+          "detail": "pageErrors=0 consoleErrors=0"
+        },
+        {
+          "name": "无失败请求(无404/CDN依赖)",
+          "pass": true,
+          "detail": "clean"
+        },
+        {
+          "name": "UI 布局无错位/越界",
+          "pass": true,
+          "detail": "OK"
+        },
+        {
+          "name": "UI 元素齐全",
+          "pass": true,
+          "detail": "{\"tabs\":4,\"sliders\":4,\"switches\":4,\"cards\":7,\"statusItems\":6}"
+        },
+        {
+          "name": "模式Tab切换正常",
+          "pass": true,
+          "detail": "video→image 往返"
+        },
+        {
+          "name": "置信度滑杆联动",
+          "pass": true,
+          "detail": "output=0.75"
+        },
+        {
+          "name": "开关可切换",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "日志抽屉可开合",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "日志包含启动记录",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "summary": {
+        "total": 13,
+        "pass": 12,
+        "fail": 1
+      },
+      "sample": {
+        "fps": 31.028900303390238,
+        "backend": "webgpu",
+        "errors": 0,
+        "resolution": {
+          "w": 960,
+          "h": 540
+        }
+      }
+    },
+    "desktop-md": {
+      "name": "desktop-md",
+      "width": 1280,
+      "height": 800,
+      "checks": [
+        {
+          "name": "页面加载且应用就绪(ready=true)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "渲染后端",
+          "pass": true,
+          "detail": "backend=webgpu vendor=undefined arch=undefined"
+        },
+        {
+          "name": "画布中心像素非空白(GPU已写入)",
+          "pass": false,
+          "detail": "rgba=0,0,0,0"
+        },
+        {
+          "name": "渲染帧率≥20fps",
+          "pass": true,
+          "detail": "fps=35.5 (SwiftShader软渲染)"
+        },
+        {
+          "name": "控制台零错误",
+          "pass": true,
+          "detail": "pageErrors=0 consoleErrors=0"
+        },
+        {
+          "name": "无失败请求(无404/CDN依赖)",
+          "pass": true,
+          "detail": "clean"
+        },
+        {
+          "name": "UI 布局无错位/越界",
+          "pass": true,
+          "detail": "OK"
+        },
+        {
+          "name": "UI 元素齐全",
+          "pass": true,
+          "detail": "{\"tabs\":4,\"sliders\":4,\"switches\":4,\"cards\":7,\"statusItems\":6}"
+        }
+      ],
+      "summary": {
+        "total": 8,
+        "pass": 7,
+        "fail": 1
+      },
+      "sample": {
+        "fps": 35.49800429823521,
+        "backend": "webgpu",
+        "errors": 0,
+        "resolution": {
+          "w": 712,
+          "h": 401
+        }
+      }
+    },
+    "laptop-sxga": {
+      "name": "laptop-sxga",
+      "width": 1024,
+      "height": 768,
+      "checks": [
+        {
+          "name": "页面加载且应用就绪(ready=true)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "渲染后端",
+          "pass": true,
+          "detail": "backend=webgpu vendor=undefined arch=undefined"
+        },
+        {
+          "name": "画布中心像素非空白(GPU已写入)",
+          "pass": false,
+          "detail": "rgba=0,0,0,0"
+        },
+        {
+          "name": "渲染帧率≥20fps",
+          "pass": true,
+          "detail": "fps=25.3 (SwiftShader软渲染)"
+        },
+        {
+          "name": "控制台零错误",
+          "pass": true,
+          "detail": "pageErrors=0 consoleErrors=0"
+        },
+        {
+          "name": "无失败请求(无404/CDN依赖)",
+          "pass": true,
+          "detail": "clean"
+        },
+        {
+          "name": "UI 布局无错位/越界",
+          "pass": true,
+          "detail": "OK"
+        },
+        {
+          "name": "UI 元素齐全",
+          "pass": true,
+          "detail": "{\"tabs\":4,\"sliders\":4,\"switches\":4,\"cards\":7,\"statusItems\":6}"
+        }
+      ],
+      "summary": {
+        "total": 8,
+        "pass": 7,
+        "fail": 1
+      },
+      "sample": {
+        "fps": 25.27878654890005,
+        "backend": "webgpu",
+        "errors": 0,
+        "resolution": {
+          "w": 996,
+          "h": 560
+        }
+      }
+    },
+    "tablet-portrait": {
+      "name": "tablet-portrait",
+      "width": 768,
+      "height": 1024,
+      "checks": [
+        {
+          "name": "页面加载且应用就绪(ready=true)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "渲染后端",
+          "pass": true,
+          "detail": "backend=webgpu vendor=undefined arch=undefined"
+        },
+        {
+          "name": "画布中心像素非空白(GPU已写入)",
+          "pass": false,
+          "detail": "rgba=0,0,0,0"
+        },
+        {
+          "name": "渲染帧率≥20fps",
+          "pass": true,
+          "detail": "fps=31.3 (SwiftShader软渲染)"
+        },
+        {
+          "name": "控制台零错误",
+          "pass": true,
+          "detail": "pageErrors=0 consoleErrors=0"
+        },
+        {
+          "name": "无失败请求(无404/CDN依赖)",
+          "pass": true,
+          "detail": "clean"
+        },
+        {
+          "name": "UI 布局无错位/越界",
+          "pass": true,
+          "detail": "OK"
+        },
+        {
+          "name": "UI 元素齐全",
+          "pass": true,
+          "detail": "{\"tabs\":4,\"sliders\":4,\"switches\":4,\"cards\":7,\"statusItems\":6}"
+        }
+      ],
+      "summary": {
+        "total": 8,
+        "pass": 7,
+        "fail": 1
+      },
+      "sample": {
+        "fps": 31.26845550743803,
+        "backend": "webgpu",
+        "errors": 0,
+        "resolution": {
+          "w": 740,
+          "h": 416
+        }
+      }
+    },
+    "phone": {
+      "name": "phone",
+      "width": 414,
+      "height": 896,
+      "checks": [
+        {
+          "name": "页面加载且应用就绪(ready=true)",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "渲染后端",
+          "pass": true,
+          "detail": "backend=webgpu vendor=undefined arch=undefined"
+        },
+        {
+          "name": "画布中心像素非空白(GPU已写入)",
+          "pass": false,
+          "detail": "rgba=0,0,0,0"
+        },
+        {
+          "name": "渲染帧率≥20fps",
+          "pass": true,
+          "detail": "fps=38.1 (SwiftShader软渲染)"
+        },
+        {
+          "name": "控制台零错误",
+          "pass": true,
+          "detail": "pageErrors=0 consoleErrors=0"
+        },
+        {
+          "name": "无失败请求(无404/CDN依赖)",
+          "pass": true,
+          "detail": "clean"
+        },
+        {
+          "name": "UI 布局无错位/越界",
+          "pass": false,
+          "detail": "#viewport 横向越界 left=0 right=550.8125 vw=414"
+        },
+        {
+          "name": "UI 元素齐全",
+          "pass": true,
+          "detail": "{\"tabs\":4,\"sliders\":4,\"switches\":4,\"cards\":7,\"statusItems\":6}"
+        }
+      ],
+      "summary": {
+        "total": 8,
+        "pass": 6,
+        "fail": 2
+      },
+      "sample": {
+        "fps": 38.11492394105865,
+        "backend": "webgpu",
+        "errors": 0,
+        "resolution": {
+          "w": 523,
+          "h": 294
+        }
+      }
+    }
+  },
+  "interactions": {
+    "desktop-xl": "见上"
+  },
+  "consoleTail": [
+    {
+      "viewport": "desktop-xl",
+      "consoleTail": [
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (destroyed)，第 73 次"
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (destroyed)，第 74 次"
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] WebGPU 不可用: requestAdapter 返回 null（无可用GPU适配器）"
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "viewport": "desktop-md",
+      "consoleTail": [
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (destroyed)，第 178 次"
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (destroyed)，第 179 次"
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (destroyed)，第 180 次"
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "viewport": "laptop-sxga",
+      "consoleTail": [
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (destroyed)，第 85 次"
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (destroyed)，第 86 次"
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "Failed to create WebGPU Context Provider"
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] WebGPU 不可用: requestAdapter 返回 null（无可用GPU适配器）"
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "viewport": "tablet-portrait",
+      "consoleTail": [
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (destroyed)，第 91 次"
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (destroyed)，第 92 次"
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] requestDevice 失败，将回退 Canvas2D: Failed to execute 'requestDevice' on 'GPUAdapter': A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "viewport": "phone",
+      "consoleTail": [
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (destroyed)，第 152 次"
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        },
+        {
+          "type": "warn",
+          "text": "A valid external Instance reference no longer exists."
+        },
+        {
+          "type": "warn",
+          "text": "[GPU] 设备丢失 (unknown)，第 153 次"
+        },
+        {
+          "type": "warn",
+          "text": "[Boot] GPU 设备已恢复"
+        }
+      ],
+      "pageErrors": []
+    }
+  ],
+  "summary": {
+    "total": 45,
+    "pass": 39,
+    "fail": 6,
+    "passRate": "86.7%",
+    "allPass": false
+  },
+  "finishedAt": "2026-09-23T01:01:05.277Z"
+}
