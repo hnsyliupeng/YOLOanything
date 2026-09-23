@@ -401,3 +401,18 @@ tbody tr.note-row:hover td{background:#f7f4ff}
 @media (max-width:720px){
   .digest-grid{grid-template-columns:repeat(2,1fr)}
 }
+
+/* ---------------- 国家/地区速查网格 ---------------- */
+.country-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.country-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:11px 13px;box-shadow:var(--shadow-sm);cursor:pointer;
+  transition:transform .12s,box-shadow .15s,border-color .15s}
+.country-card:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:var(--shadow)}
+.country-card.note-only{background:linear-gradient(180deg,#fdfcff,#faf8ff);border-style:dashed}
+.cg-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cg-name{font-size:14px;font-weight:700}
+.cg-body{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.cg-line{font-size:12px;color:var(--ink-2)}
+.cg-trend{font-size:11.4px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--line);padding-top:5px}
+@media (max-width:1080px){.country-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:720px){.country-grid{grid-template-columns:1fr}}

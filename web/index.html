@@ -23,6 +23,7 @@
       <a href="#overview" class="active">概览</a>
       <a href="#map">全球地图</a>
       <a href="#ranking">国家排行</a>
+      <a href="#countries">国家速查</a>
       <a href="#timeline">时间演变</a>
       <a href="#events">事件库</a>
       <a href="#science">科学认知</a>
@@ -84,6 +85,7 @@
           <button data-m="severity">综合严重度</button>
           <button data-m="size">最大冰雹直径</button>
           <button data-m="loss">经济损失</button>
+          <button data-m="risk">风险等级</button>
         </div>
       </div>
     </header>
@@ -170,6 +172,7 @@
           <button data-m="size">最大直径</button>
           <button data-m="casualties">人员伤亡</button>
           <button data-m="loss">经济损失</button>
+          <button data-m="risk">风险等级</button>
         </div>
       </div>
     </header>
@@ -188,6 +191,29 @@
       </div>
     </div>
     <div class="card" id="regionCompare"></div>
+  </section>
+
+  <!-- ============ 国家/地区速查 ============ -->
+  <section class="section" id="countries">
+    <header class="section-head">
+      <div>
+        <h2>国家/地区速查</h2>
+        <p class="sub">
+          全部 66 个国家/地区的风险等级、趋势、事件数与关键指标一览。带「仅有风险备注」标记的国家在近十年窗口内
+          没有事件级记录——这通常反映的是观测与报告能力不足，而不是没有风险。
+        </p>
+      </div>
+      <div class="toolbar">
+        <input type="search" id="countrySearch" placeholder="搜索国家名 / ISO 代码…">
+        <select id="countryRiskSort">
+          <option value="risk">按风险等级排序</option>
+          <option value="events">按事件数排序</option>
+          <option value="loss">按可统计损失排序</option>
+          <option value="name">按名称排序</option>
+        </select>
+      </div>
+    </header>
+    <div class="country-grid" id="countryGrid"></div>
   </section>
 
   <!-- ============ 时间演变 ============ -->
@@ -214,6 +240,7 @@
       </div>
       <div class="toolbar">
         <input type="search" id="eventSearch" placeholder="搜索国家 / 地区 / 关键词…">
+        <button class="btn tiny" id="exportCsv" title="导出当前筛选结果为 CSV（可用 Excel 打开）">导出 CSV</button>
         <select id="eventSort">
           <option value="date-desc">最新在前</option>
           <option value="date-asc">最早在前</option>

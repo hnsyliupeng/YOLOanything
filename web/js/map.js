@@ -15,6 +15,24 @@ window.MapView = (function () {
   var NO_DATA = "#f1f5f9";
   var HAS_NO_EVENT = "#e2e8f0";
   var NOTE_ONLY = "#ece7fb";   /* 仅有风险备注、在窗口内无收录事件 */
+  /* 风险等级专用色阶（绿 → 红），与数量型指标的对数蓝阶区分 */
+  var RISK_STEPS = [
+    { v: 1, label: "低", color: "#bbf7d0" },
+    { v: 2, label: "低—中", color: "#d9f99d" },
+    { v: 3, label: "中", color: "#fde68a" },
+    { v: 3.5, label: "中—高", color: "#fdba74" },
+    { v: 4, label: "高", color: "#fb923c" },
+    { v: 5, label: "极高", color: "#dc2626" }
+  ];
+  function riskColor(v) {
+    if (!v) return null;
+    var best = RISK_STEPS[0], bestD = 99;
+    RISK_STEPS.forEach(function (s) {
+      var d = Math.abs(s.v - v);
+      if (d < bestD) { bestD = d; best = s; }
+    });
+    return best.color;
+  }
 
   function init(opts) {
     container = document.querySelector(".map-wrap");
@@ -151,17 +169,20 @@ window.MapView = (function () {
     lastData = data;
     if (!ready) return;
     var max = data.max || 1;
+    var colorFor = data.colorByIso || data.byIso;
+    var isRisk = data.metricKey === "risk";
 
     gCountries.selectAll("path.country")
       .attr("fill", function (f) {
         if (!f.__iso) return HAS_NO_EVENT;
-        var c = data.byIso[f.__iso];
+        var c = colorFor[f.__iso];
         if (!c) {
           if (data.showNotes && data.noteIsos && data.noteIsos[f.__iso]) return NOTE_ONLY;
           return HAS_NO_EVENT;
         }
         var v = data.value(c);
         if (!v || v <= 0) return NO_DATA;
+        if (isRisk) return riskColor(v) || NO_DATA;
         return U.seqColor(v, max) || NO_DATA;
       })
       .attr("stroke", function (f) { return f.__iso === data.selected ? "#0f172a" : "#ffffff"; })
@@ -204,6 +225,23 @@ window.MapView = (function () {
 
     /* 图例 */
     var unit = data.unit || "";
+    if (isRisk) {
+      var riskLegend = '<span class="lg-title">风险等级（编辑判断 · 1–5 级）</span><div class="ramp">' +
+        '<i style="background:' + HAS_NO_EVENT + '" title="无资料"></i>' +
+        RISK_STEPS.map(function (s) {
+          return '<i style="background:' + s.color + '" title="' + U.esc(s.label) + '（' + s.v + '）"></i>';
+        }).join("") + '</div>' +
+        '<div class="ramp-labels"><span>低</span><span>极高</span></div>' +
+        '<div class="dot-key"><span>' + RISK_STEPS.map(function (s) {
+          return '<i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:' + s.color + '"></i>' + U.esc(s.label);
+        }).join(" ") + '</span></div>';
+      if (data.showBubbles) {
+        riskLegend += '<div class="dot-key"><span class="muted">圆点大小＝最大冰雹直径，颜色＝事件年份</span></div>';
+      }
+      if (legendEl) legendEl.innerHTML = riskLegend;
+      updateNote(data, true);
+      return;
+    }
     var steps = U.legendSteps(max);
     var legendHtml = '<span class="lg-title">' + U.esc(data.metricLabel) + (unit ? "（" + U.esc(unit) + "）" : "") + '</span>';
     legendHtml += '<div class="ramp">';
@@ -232,16 +270,25 @@ window.MapView = (function () {
     }
     if (legendEl) legendEl.innerHTML = legendHtml;
 
-    if (noteEl && !failed) {
-      var ev = data.events.length;
-      var noteCount = data.noteIsos ? Object.keys(data.noteIsos).length : 0;
-      noteEl.innerHTML = '<b>当前筛选：</b>' + y0 + '–' + y1 + ' 年 · ' +
-        (data.regionLabel || "全部区域") + ' · ' + (data.filterLabel || "全部事件") +
-        ' ｜ 地图上 ' + ev + ' 个事件气泡，' +
+    updateNote(data, false);
+  }
+
+  function updateNote(data, isRisk) {
+    if (!noteEl || failed) return;
+    var ev = data.events.length;
+    var noteCount = data.noteIsos ? Object.keys(data.noteIsos).length : 0;
+    var body = '<b>当前筛选：</b>' + data.y0 + '–' + data.y1 + ' 年 · ' +
+      (data.regionLabel || "全部区域") + ' · ' + (data.filterLabel || "全部事件") + ' ｜ ';
+    if (isRisk) {
+      body += '地图按风险等级着色（覆盖 ' + (Object.keys(data.colorByIso || {}).length) + ' 个国家/地区，含 ' +
+        noteCount + ' 个仅有风险备注、无收录事件者）；' + ev + ' 个事件气泡。';
+    } else {
+      body += '地图上 ' + ev + ' 个事件气泡，' +
         Object.keys(data.byIso).length + ' 个国家/地区有收录事件' +
         (data.showNotes && noteCount ? '、' + noteCount + ' 个仅有风险备注' : '') +
         '（颜色最深 = ' + U.esc(data.metricLabel) + ' 最高）。';
     }
+    noteEl.innerHTML = body;
   }
 
   return {

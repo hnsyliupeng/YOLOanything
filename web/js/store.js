@@ -61,6 +61,19 @@ window.Store = (function () {
       if (o) Object.keys(o).forEach(function (iso) { NOTES[iso] = o[iso]; });
     });
 
+  /* 备注中的风险等级 → 1–5 数值（用于地图与速查表排序） */
+  function riskScore(note) {
+    if (!note || !note.risk) return null;
+    var r = note.risk;
+    if (r.indexOf("极高") >= 0) return 5;
+    if (r.indexOf("中—高") >= 0 || r.indexOf("中-高") >= 0) return 3.5;
+    if (r.indexOf("低—中") >= 0 || r.indexOf("低-中") >= 0) return 2;
+    if (r.indexOf("高") === 0) return 4;
+    if (r.indexOf("中") === 0) return 3;
+    if (r.indexOf("低") === 0) return 1;
+    return 3;
+  }
+
   /* ---------- 3. 序列合并（元数据序列 + 逐国序列） ---------- */
   var SERIES = (META.series || []).slice();
   Object.keys(window.HAIL_SERIES_DATA || {}).forEach(function (iso) {
@@ -174,6 +187,7 @@ window.Store = (function () {
     Object.keys(map).forEach(function (iso) {
       map[iso].note = NOTES[iso] || null;
       map[iso].severityAvg = map[iso].severitySum / map[iso].count;
+      map[iso].risk = riskScore(NOTES[iso]);
     });
     return Object.keys(map).map(function (k) { return map[k]; });
   }
@@ -185,6 +199,7 @@ window.Store = (function () {
       case "severity": return c.severityMax;
       case "size": return c.maxSize || 0;
       case "loss": return c.loss || 0;
+      case "risk": return c.risk || 0;
       default: return c.count;
     }
   }
@@ -253,7 +268,7 @@ window.Store = (function () {
         iso2: iso, zh: U.countryName(iso), continent: c.c, continentLabel: U.continentLabel(c.c),
         count: 0, loss: 0, lossCount: 0, maxSize: null, deaths: 0, injuries: 0, casualties: 0,
         severitySum: 0, severityMax: 0, severityAvg: 0, top: null, events: [],
-        note: NOTES[iso] || null, noteOnly: true
+        note: NOTES[iso] || null, noteOnly: true, risk: riskScore(NOTES[iso])
       };
     }).sort(function (a, b) { return a.zh.localeCompare(b.zh, "zh-CN"); });
   }
@@ -329,7 +344,7 @@ window.Store = (function () {
     filtered: filtered, countries: countries, metricValue: metricValue,
     metricMax: metricMax, kpis: kpis, timeline: timeline,
     noteOnlyCountries: noteOnlyCountries, allCountries: allCountries,
-    regionStats: regionStats, extremes: extremes,
+    regionStats: regionStats, extremes: extremes, riskScore: riskScore,
     CONTINENT_ORDER: CONTINENT_ORDER
   };
 })();

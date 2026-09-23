@@ -197,6 +197,44 @@ window.Tables = (function () {
   var onDigestEvent = function () { };
   var onDigestCountry = function () { };
 
+  /* ---------- 国家/地区速查网格 ---------- */
+  function renderCountryGrid(sel, list, onSelect, keyword) {
+    var kw = (keyword || "").trim().toLowerCase();
+    var filtered = list.filter(function (c) {
+      if (!kw) return true;
+      return (c.zh + " " + c.iso2 + " " + (c.note && c.note.risk ? c.note.risk : "")).toLowerCase().indexOf(kw) >= 0;
+    });
+    if (!filtered.length) {
+      set(sel, '<p class="muted">没有匹配的国家/地区。可尝试输入中文名或 ISO 代码（如 US、ZA）。</p>');
+      return 0;
+    }
+    var html = filtered.map(function (c) {
+      var risk = c.risk || 0;
+      var riskCls = risk >= 4 ? "sev-5" : (risk >= 3.5 ? "sev-4" : (risk >= 3 ? "sev-3" : ""));
+      var stats = c.noteOnly
+        ? '<span class="cg-line">风险等级：<b>' + U.esc(c.note && c.note.risk ? c.note.risk : "—") + '</b></span>' +
+          '<span class="cg-line">近十年无收录事件（数据缺口）</span>'
+        : '<span class="cg-line">事件 <b>' + c.count + '</b> 起 · 最大 <b>' +
+            (c.maxSize ? U.num(c.maxSize, 0) + " cm" : "—") + '</b></span>' +
+          '<span class="cg-line">' + c.deaths + ' 死 / ' + c.injuries + ' 伤 · ' +
+            (c.loss ? U.moneyShort(c.loss) : "无金额数据") + '</span>';
+      var trend = c.note && c.note.trend ? U.esc(c.note.trend.slice(0, 54)) + (c.note.trend.length > 54 ? "…" : "") : "";
+      return '<div class="country-card' + (c.noteOnly ? " note-only" : "") + '" data-iso="' + U.esc(c.iso2) + '">' +
+        '<div class="cg-head"><span class="cg-name">' + U.esc(c.zh) + '</span>' +
+        '<span class="sev ' + riskCls + '">' + U.esc(c.note && c.note.risk ? c.note.risk : "—") + '</span></div>' +
+        '<div class="cg-body">' + stats + '</div>' +
+        (trend ? '<div class="cg-trend">' + trend + '</div>' : '') +
+        '</div>';
+    }).join("");
+    var host = set(sel, html);
+    if (host) {
+      host.querySelectorAll(".country-card").forEach(function (n) {
+        n.addEventListener("click", function () { onSelect(n.getAttribute("data-iso")); });
+      });
+    }
+    return filtered.length;
+  }
+
   /* ---------- 区域对照表 ---------- */
   function renderRegionCompare(sel, rows, multi) {
     var head = "<thead><tr><th>区域</th><th class='num'>国家/地区</th><th class='num'>事件数</th>" +
@@ -469,6 +507,7 @@ window.Tables = (function () {
   }
 
   return {
+    renderCountryGrid: renderCountryGrid,
     setDigestHandlers: function (countryFn, eventFn) {
       onDigestCountry = countryFn; onDigestEvent = eventFn;
     },

@@ -10,6 +10,8 @@
   var selectedEventId = null;
   var includeNotes = false;
   var showNotes = true;
+  var countryKeyword = "";
+  var countrySortGrid = "risk";
   var countrySort = { key: "count", dir: -1 };
   var searchTimer = null;
 
@@ -17,7 +19,13 @@
     count: { label: "事件数量", unit: "起", value: function (c) { return c.count; }, max: function () { return S.metricMax("count"); } },
     severity: { label: "综合严重度（最高）", unit: "级", value: function (c) { return c.severityMax; }, max: function () { return 5; } },
     size: { label: "最大冰雹直径", unit: "cm", value: function (c) { return c.maxSize || 0; }, max: function () { return S.metricMax("size"); } },
-    loss: { label: "累计可统计经济损失", unit: "百万美元", value: function (c) { return c.loss || 0; }, max: function () { return S.metricMax("loss"); } }
+    loss: { label: "累计可统计经济损失", unit: "百万美元", value: function (c) { return c.loss || 0; }, max: function () { return S.metricMax("loss"); } },
+    risk: {
+      label: "风险等级（编辑判断）", unit: "级",
+      value: function (c) { return c.risk || 0; },
+      max: function () { return 5; },
+      noteIsos: "all"
+    }
   };
 
   /* ---------------- 静态内容 ---------------- */
@@ -76,6 +84,25 @@
     Tables.renderCountryTable("#countryTable", tableCountries, countrySort.key, countrySort.dir, selectedIso, onRowAction);
     Tables.renderRegionCompare("#regionCompare", S.regionStats(), ex.multi);
 
+    /* 国家速查网格（全部有备注的国家，包含仅有备注者） */
+    var gridList = S.allCountries(true, ev).slice();
+    gridList.forEach(function (c) {
+      if (c.risk === undefined) c.risk = S.riskScore(S.NOTES[c.iso2]);
+    });
+    gridList.sort(function (a, b) {
+      var ka = countrySortGrid === "risk" ? (b.risk || 0) - (a.risk || 0)
+        : countrySortGrid === "events" ? b.count - a.count
+        : countrySortGrid === "loss" ? (b.loss || 0) - (a.loss || 0)
+        : a.zh.localeCompare(b.zh, "zh-CN");
+      if (ka !== 0) return ka;
+      if ((b.risk || 0) !== (a.risk || 0)) return (b.risk || 0) - (a.risk || 0);
+      if (b.count !== a.count) return b.count - a.count;
+      return a.zh.localeCompare(b.zh, "zh-CN");
+    });
+    var shownCountries = Tables.renderCountryGrid("#countryGrid", gridList, selectCountry, countryKeyword);
+    var gridHint = document.getElementById("gridHint");
+    if (gridHint) gridHint.textContent = shownCountries + " / " + gridList.length + " 个国家/地区";
+
     /* 事件表 */
     var sorted = sortedEvents(ev, state.sort);
     var meta = Tables.renderEventTable("#eventTable", sorted, state.page, state.pageSize, selectedEventId, function (id) { openEvent(id); });
@@ -91,12 +118,25 @@
 
     /* 地图 */
     var mm = MAP_METRICS[state.mapMetric] || MAP_METRICS.count;
-    var noteIsos = {};
-    if (showNotes) {
-      S.noteOnlyCountries(ev).forEach(function (c) { noteIsos[c.iso2] = 1; });
+    var noteIsos = {}, noteCountries = {};
+    S.noteOnlyCountries(ev).forEach(function (c) {
+      noteCountries[c.iso2] = c;      /* 风险等级视图始终纳入；其余指标按开关决定是否上色 */
+      if (showNotes) noteIsos[c.iso2] = 1;
+    });
+    /* 风险等级指标：把仅有备注的国家也并入色阶（全球覆盖视图） */
+    var colorByIso = byIso;
+    if (mm.noteIsos === "all" && Object.keys(noteCountries).length) {
+      colorByIso = {};
+      Object.keys(byIso).forEach(function (k) { colorByIso[k] = byIso[k]; });
+      Object.keys(noteCountries).forEach(function (k) {
+        var c = noteCountries[k];
+        colorByIso[k] = { count: 0, loss: 0, lossCount: 0, maxSize: null, deaths: 0, injuries: 0,
+          casualties: 0, severityMax: 0, risk: c.risk, note: c.note, zh: c.zh, continent: c.continent };
+      });
     }
     MapView.draw({
       noteIsos: noteIsos,
+      colorByIso: colorByIso,
       notes: S.NOTES,
       showNotes: showNotes,
       byIso: byIso,
@@ -105,6 +145,7 @@
       max: mm.max(),
       unit: mm.unit,
       metricLabel: mm.label,
+      metricKey: state.mapMetric,
       y0: state.yearFrom, y1: state.yearTo,
       selected: selectedIso,
       showBubbles: state.showBubbles,
@@ -227,6 +268,18 @@
     var sort = document.getElementById("eventSort");
     if (sort) sort.addEventListener("change", function () { S.setState({ sort: sort.value }); });
 
+    var cSearch = document.getElementById("countrySearch");
+    if (cSearch) cSearch.addEventListener("input", function () {
+      clearTimeout(searchTimer);
+      var v = cSearch.value;
+      searchTimer = setTimeout(function () { countryKeyword = v; render(); }, 180);
+    });
+    var cSort = document.getElementById("countryRiskSort");
+    if (cSort) cSort.addEventListener("change", function () { countrySortGrid = cSort.value; render(); });
+
+    var csvBtn = document.getElementById("exportCsv");
+    if (csvBtn) csvBtn.addEventListener("click", function () { exportCsv(csvBtn); });
+
     segSetup("#mapMetric", function (m) { S.setState({ mapMetric: m }); });
     segSetup("#rankMetric", function (m) {
       S.setState({ rankMetric: m });
@@ -255,6 +308,53 @@
     });
   }
 
+  /* ---------------- 导出 CSV（当前筛选结果） ---------------- */
+  function csvCell(v) {
+    if (v === null || v === undefined) return "";
+    var t = String(v).replace(/"/g, '""').replace(/\r?\n/g, " ");
+    return /[",]/.test(t) ? '"' + t + '"' : t;
+  }
+
+  function exportCsv(btn) {
+    var ev = sortedEvents(S.filtered(), S.state.sort);
+    var head = ["日期", "精度", "国家/地区", "英文名", "区域", "纬度", "经度", "最大冰雹cm",
+      "死亡", "受伤", "受灾人口", "经济损失百万美元", "保险损失百万美元", "严重度", "摘要", "来源"];
+    var rows = [head.join(",")];
+    ev.forEach(function (e) {
+      rows.push([
+        e.date, e.precision, e.zh, e.en, e.region, e.lat, e.lon, e.size,
+        e.deaths, e.injuries, e.affected, e.loss, e.insured, e.severity,
+        (e.summary || "").replace(/"/g, "'"),
+        (e.src || []).map(function (s) { return s[0] + " " + s[1]; }).join(" | ")
+      ].map(csvCell).join(","));
+    });
+    var csv = "\uFEFF" + rows.join("\r\n");
+    var name = "全球冰雹事件_" + S.state.yearFrom + "-" + S.state.yearTo + "_" + ev.length + "条.csv";
+    try {
+      if (typeof Blob === "undefined" || typeof URL.createObjectURL !== "function") {
+        throw new Error("环境不支持文件下载");
+      }
+      var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = name;
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1500);
+      if (btn) {
+        var old = btn.textContent;
+        btn.textContent = "已导出 " + ev.length + " 条 ✓";
+        setTimeout(function () { btn.textContent = old; }, 2200);
+      }
+    } catch (err) {
+      console.log("CSV 下载不可用（" + err.message + "），改为在页面内展示导出内容");
+      var pre = document.createElement("pre");
+      pre.style.cssText = "max-height:320px;overflow:auto;font-size:11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px";
+      pre.textContent = csv;
+      var host = document.getElementById("eventTable");
+      if (host) host.parentNode.insertBefore(pre, host.nextSibling);
+    }
+  }
+
   /* ---------------- 导航栏 ---------------- */
   function initNav() {
     var toggle = document.getElementById("navToggle");
@@ -265,7 +365,7 @@
         a.addEventListener("click", function () { links.classList.remove("open"); });
       });
     }
-    var sections = ["overview", "map", "ranking", "timeline", "events", "science", "method"];
+    var sections = ["overview", "map", "ranking", "countries", "timeline", "events", "science", "method"];
     var navAnchors = {};
     if (links) links.querySelectorAll("a").forEach(function (a) {
       navAnchors[(a.getAttribute("href") || "").replace("#", "")] = a;
