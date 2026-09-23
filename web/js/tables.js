@@ -109,10 +109,13 @@ window.Tables = (function () {
     }).join("") + "</tr></thead>";
 
     var body = "<tbody>" + rows.map(function (c) {
-      return '<tr data-iso="' + U.esc(c.iso2) + '" class="' + (c.iso2 === selected ? "active-row" : "") + '">' +
+      var sub = c.noteOnly
+        ? '<span class="chip grey">仅有风险备注</span>' + U.esc((c.note && c.note.risk) ? c.note.risk : "")
+        : U.esc((c.top && c.top.region ? c.top.region : "").slice(0, 26));
+      return '<tr data-iso="' + U.esc(c.iso2) + '" class="' + (c.iso2 === selected ? "active-row" : "") + (c.noteOnly ? " note-row" : "") + '">' +
         '<td><span class="cell-strong">' + U.esc(c.zh) + '</span>' +
-        '<div class="cell-sub">' + U.esc((c.top && c.top.region ? c.top.region : "").slice(0, 26)) + '</div></td>' +
-        '<td class="num">' + c.count + '</td>' +
+        '<div class="cell-sub">' + sub + '</div></td>' +
+        '<td class="num">' + (c.noteOnly ? "—" : c.count) + '</td>' +
         '<td class="num">' + (c.maxSize ? U.num(c.maxSize, 0) + " cm" : "—") + '</td>' +
         '<td class="num">' + c.deaths + " / " + c.injuries + '</td>' +
         '<td class="num">' + (c.loss ? U.moneyShort(c.loss) : "—") +
@@ -128,6 +131,100 @@ window.Tables = (function () {
     host.querySelectorAll("tbody tr").forEach(function (tr) {
       tr.addEventListener("click", function () { onSelect(tr.getAttribute("data-iso")); });
     });
+  }
+
+  /* ---------- 全球速览（十年之最与覆盖度） ---------- */
+  function renderDigest(sel, ex, state) {
+    var items = [];
+    if (ex.costliest) {
+      items.push({
+        k: "最昂贵", v: U.moneyShort(ex.costliest.loss),
+        h: ex.costliest.zh + ' · ' + (ex.costliest.region || ""), d: U.fmtDate(ex.costliest),
+        p: (ex.costliest.loss_txt || "").slice(0, 60), iso: ex.costliest.iso2, ev: ex.costliest.id
+      });
+    }
+    if (ex.largest) {
+      items.push({
+        k: "最大冰雹", v: U.num(ex.largest.size, 0) + " cm",
+        h: ex.largest.zh + ' · ' + (ex.largest.region || ""), d: U.fmtDate(ex.largest),
+        p: (ex.largest.size_txt || "").slice(0, 60), iso: ex.largest.iso2, ev: ex.largest.id
+      });
+    }
+    if (ex.deadliest) {
+      items.push({
+        k: "最多伤亡", v: U.num(ex.deadliest.casualties) + " 人",
+        h: ex.deadliest.zh + ' · ' + (ex.deadliest.region || ""), d: U.fmtDate(ex.deadliest),
+        p: ex.deadliest.deaths + " 死 / " + ex.deadliest.injuries + " 伤", iso: ex.deadliest.iso2, ev: ex.deadliest.id
+      });
+    }
+    if (ex.mostActive) {
+      items.push({
+        k: "事件最多", v: ex.mostActive.count + " 起",
+        h: ex.mostActive.zh, d: "有收录事件的国家/地区共 " + Store.countries().length + " 个",
+        p: "最大冰雹 " + (ex.mostActive.maxSize ? U.num(ex.mostActive.maxSize, 0) + " cm" : "—"), iso: ex.mostActive.iso2
+      });
+    }
+    if (ex.biggestLossCountry) {
+      items.push({
+        k: "累计损失最高", v: U.moneyShort(ex.biggestLossCountry.loss),
+        h: ex.biggestLossCountry.zh, d: ex.biggestLossCountry.lossCount + " 起事件有金额数据",
+        p: "可统计损失（口径混合，不宜跨国直接相加）", iso: ex.biggestLossCountry.iso2
+      });
+    }
+    items.push({
+      k: "覆盖度", v: U.num(Store.EVENTS.length) + " 起",
+      h: (Store.countries().length + " 国有事件 · " + (ex.noteOnly ? ex.noteOnly.length : 0) + " 国仅有风险备注"),
+      d: "数据源 " + (Store.META.sources || []).length + " 个 · 文献结论 " + ((Store.META.science || []).length) + " 条",
+      p: "全球冰雹资料在国家间极不均衡，「无数据」不等于「无风险」"
+    });
+    var host = set(sel, items.map(function (i) {
+      return '<div class="digest' + (i.iso ? " clickable" : "") + '"' +
+        (i.iso ? ' data-iso="' + U.esc(i.iso) + '"' + (i.ev ? ' data-ev="' + U.esc(i.ev) + '"' : '') : '') + '>' +
+        '<div class="dg-k">' + U.esc(i.k) + '</div>' +
+        '<div class="dg-v">' + U.esc(i.v) + '</div>' +
+        '<div class="dg-h">' + U.esc(i.h) + '</div>' +
+        '<div class="dg-d">' + U.esc(i.d) + ' · ' + U.esc(i.p) + '</div></div>';
+    }).join(""));
+    if (host) {
+      host.querySelectorAll(".digest.clickable").forEach(function (n) {
+        n.addEventListener("click", function () {
+          var ev = n.getAttribute("data-ev");
+          if (ev) onDigestEvent(ev); else onDigestCountry(n.getAttribute("data-iso"));
+        });
+      });
+    }
+  }
+  var onDigestEvent = function () { };
+  var onDigestCountry = function () { };
+
+  /* ---------- 区域对照表 ---------- */
+  function renderRegionCompare(sel, rows, multi) {
+    var head = "<thead><tr><th>区域</th><th class='num'>国家/地区</th><th class='num'>事件数</th>" +
+      "<th class='num'>死亡/受伤</th><th class='num'>最大冰雹</th><th class='num'>可统计损失</th><th>最大冰雹事件</th><th>最昂贵事件</th></tr></thead>";
+    var maxEv = rows.reduce(function (m, r) { return Math.max(m, r.events); }, 1);
+    var body = "<tbody>" + rows.map(function (r) {
+      return "<tr>" +
+        '<td><span class="cell-strong">' + U.esc(r.label) + '</span>' +
+        '<div class="bar-track" style="height:5px;margin-top:4px"><i style="display:block;height:100%;border-radius:4px;width:' +
+        Math.round(r.events / maxEv * 100) + '%;background:' + U.regionColor(r.key) + '"></i></div></td>' +
+        '<td class="num">' + r.countries + '</td>' +
+        '<td class="num">' + r.events + '</td>' +
+        '<td class="num">' + r.deaths + " / " + r.injuries + '</td>' +
+        '<td class="num">' + (r.maxSize ? U.num(r.maxSize, 0) + " cm" : "—") + '</td>' +
+        '<td class="num">' + (r.loss ? U.moneyShort(r.loss) : "—") + '</td>' +
+        '<td>' + (r.maxEvent ? '<span class="cell-strong">' + U.esc(r.maxEvent.zh) + '</span><div class="cell-sub">' +
+          U.esc((r.maxEvent.region || "").slice(0, 22)) + ' · ' + U.esc(U.year(r.maxEvent)) + '</div>' : "—") + '</td>' +
+        '<td>' + (r.topLoss ? U.moneyShort(r.topLoss.loss) + '<div class="cell-sub">' + U.esc(r.topLossCountry || "") +
+          ' · ' + U.esc(U.year(r.topLoss)) + '</div>' : "—") + '</td></tr>';
+    }).join("") + "</tbody>";
+    var multiHtml = "";
+    if (multi && multi.length) {
+      multiHtml = '<p class="muted" style="margin-top:8px">另有 <b>' + multi.length + '</b> 起跨国事件（' +
+        multi.map(function (e) { return U.esc(e.date.slice(0, 7)); }).join("、") +
+        '）不计入单一国家，但计入全球总量与时间序列。</p>';
+    }
+    set(sel, '<div class="card-head"><h3>按区域对照</h3><span class="muted">同一套筛选条件下的横向比较；损失的统计口径混合，仅作量级参考</span></div>' +
+      '<div class="table-scroll" style="max-height:none"><table>' + head + body + '</table></div>' + multiHtml);
   }
 
   /* ---------- 事件表 ---------- */
@@ -372,6 +469,10 @@ window.Tables = (function () {
   }
 
   return {
+    setDigestHandlers: function (countryFn, eventFn) {
+      onDigestCountry = countryFn; onDigestEvent = eventFn;
+    },
+    renderDigest: renderDigest, renderRegionCompare: renderRegionCompare,
     renderKpis: renderKpis, renderInsights: renderInsights,
     renderRankBars: renderRankBars, renderCountryTable: renderCountryTable,
     renderEventTable: renderEventTable, renderEventFoot: renderEventFoot,

@@ -8,6 +8,8 @@
   var META = S.META;
   var selectedIso = null;
   var selectedEventId = null;
+  var includeNotes = false;
+  var showNotes = true;
   var countrySort = { key: "count", dir: -1 };
   var searchTimer = null;
 
@@ -63,12 +65,16 @@
     var byIso = {};
     countries.forEach(function (c) { byIso[c.iso2] = c; });
 
-    /* KPI */
+    /* KPI 与全球速览 */
     Tables.renderKpis("#kpiGrid", S.kpis(), state);
+    var ex = S.extremes();
+    Tables.renderDigest("#digestGrid", ex, state);
 
-    /* 排行与表格 */
+    /* 排行榜（始终只用有事件的国家）与可选含备注的国家表 */
+    var tableCountries = includeNotes ? S.allCountries(true, ev) : countries;
     Tables.renderRankBars("#rankBars", countries, state.rankMetric, selectedIso, onRowAction);
-    Tables.renderCountryTable("#countryTable", countries, countrySort.key, countrySort.dir, selectedIso, onRowAction);
+    Tables.renderCountryTable("#countryTable", tableCountries, countrySort.key, countrySort.dir, selectedIso, onRowAction);
+    Tables.renderRegionCompare("#regionCompare", S.regionStats(), ex.multi);
 
     /* 事件表 */
     var sorted = sortedEvents(ev, state.sort);
@@ -85,7 +91,14 @@
 
     /* 地图 */
     var mm = MAP_METRICS[state.mapMetric] || MAP_METRICS.count;
+    var noteIsos = {};
+    if (showNotes) {
+      S.noteOnlyCountries(ev).forEach(function (c) { noteIsos[c.iso2] = 1; });
+    }
     MapView.draw({
+      noteIsos: noteIsos,
+      notes: S.NOTES,
+      showNotes: showNotes,
       byIso: byIso,
       events: ev,
       value: mm.value,
@@ -96,19 +109,22 @@
       selected: selectedIso,
       showBubbles: state.showBubbles,
       regionLabel: state.region === "all" ? "全部区域" : U.continentLabel(state.region),
+      includeNotes: includeNotes,
       filterLabel: (state.minSize ? "≥" + state.minSize + " cm" : "不限直径") + (state.casualtyOnly ? " · 仅伤亡事件" : "")
     });
 
     /* 国家面板 */
     var note = selectedIso ? (S.NOTES[selectedIso] || null) : null;
-    if (selectedIso && !byIso[selectedIso] && !note) {
-      note = { __iso: selectedIso, __continent: U.continentOf(selectedIso) };
+    if (selectedIso && !byIso[selectedIso]) {
+      var base = note || {};
+      note = Object.assign({}, base, { __iso: selectedIso, __continent: U.continentOf(selectedIso) });
     }
     Tables.renderCountryPanel("#countryPanel", byIso[selectedIso] || null, note, function (id) { openEvent(id); });
 
     /* 提示文字 */
     var hint = document.getElementById("tableHint");
-    if (hint) hint.textContent = countries.length + " 个国家/地区 · 点击表头排序";
+    if (hint) hint.textContent = tableCountries.length + " 个国家/地区（" + countries.length +
+      " 个有事件 · " + (tableCountries.length - countries.length) + " 个仅备注）· 点击表头排序";
   }
 
   /* ---------------- 交互动作 ---------------- */
@@ -172,6 +188,18 @@
     var bub = document.getElementById("showBubbles");
     if (bub) bub.addEventListener("change", function () { S.setState({ showBubbles: bub.checked }); });
 
+    var notesToggle = document.getElementById("showNotes");
+    if (notesToggle) notesToggle.addEventListener("change", function () {
+      showNotes = notesToggle.checked;
+      render();
+    });
+
+    var incNotes = document.getElementById("includeNotes");
+    if (incNotes) incNotes.addEventListener("change", function () {
+      includeNotes = incNotes.checked;
+      render();
+    });
+
     var reset = document.getElementById("resetMap");
     if (reset) reset.addEventListener("click", function () {
       S.reset();
@@ -181,6 +209,8 @@
       if (size) size.value = "0";
       if (cas) cas.checked = false;
       if (bub) bub.checked = true;
+      if (notesToggle) { notesToggle.checked = true; showNotes = true; }
+      if (incNotes) { incNotes.checked = false; includeNotes = false; }
       selectedIso = null;
       var search = document.getElementById("eventSearch");
       if (search) search.value = "";
@@ -268,6 +298,7 @@
   function boot() {
     renderStatic();
     initYearSelects();
+    Tables.setDigestHandlers(function (iso) { selectCountry(iso); }, function (id) { openEvent(id); });
     initControls();
     initNav();
     MapView.init({
@@ -277,7 +308,8 @@
     S.subscribe(render);
     render();
     console.log("[冰雹图谱] 事件 " + S.EVENTS.length + " 起 · 国家备注 " +
-      Object.keys(S.NOTES).length + " 个 · 序列 " + S.SERIES.length + " 组");
+      Object.keys(S.NOTES).length + " 个 · 序列 " + S.SERIES.length +
+      " 组 · 极值 " + (S.META.records || []).length + " 条 · 文献结论 " + (S.META.science || []).length + " 条");
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

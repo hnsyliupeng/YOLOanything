@@ -14,6 +14,7 @@ window.MapView = (function () {
 
   var NO_DATA = "#f1f5f9";
   var HAS_NO_EVENT = "#e2e8f0";
+  var NOTE_ONLY = "#ece7fb";   /* 仅有风险备注、在窗口内无收录事件 */
 
   function init(opts) {
     container = document.querySelector(".map-wrap");
@@ -124,6 +125,14 @@ window.MapView = (function () {
     var c = lastData && lastData.byIso ? lastData.byIso[iso] : null;
     var name = iso ? U.countryName(iso) : ((f.properties && f.properties.name) || "未知地区");
     var html = '<b>' + U.esc(name) + '</b>';
+    if (!c && lastData && lastData.noteIsos && lastData.noteIsos[iso]) {
+      var note = lastData.notes ? lastData.notes[iso] : null;
+      showTip(ev, '<b>' + U.esc(name) + '</b><span class="muted">当前筛选下无收录事件</span>' +
+        (note && note.risk ? '<span>风险等级：<b>' + U.esc(note.risk) + '</b></span>' : '') +
+        (note && note.trend ? '<span>' + U.esc(note.trend.slice(0, 46)) + '…</span>' : '') +
+        '<em>点击查看国家档案（含风险备注）</em>');
+      return;
+    }
     if (c) {
       html += '<span>收录事件 <b>' + c.count + '</b> 起</span>';
       if (c.maxSize) html += '<span>最大冰雹 <b>' + U.num(c.maxSize, 0) + ' cm</b></span>';
@@ -147,7 +156,10 @@ window.MapView = (function () {
       .attr("fill", function (f) {
         if (!f.__iso) return HAS_NO_EVENT;
         var c = data.byIso[f.__iso];
-        if (!c) return HAS_NO_EVENT;
+        if (!c) {
+          if (data.showNotes && data.noteIsos && data.noteIsos[f.__iso]) return NOTE_ONLY;
+          return HAS_NO_EVENT;
+        }
         var v = data.value(c);
         if (!v || v <= 0) return NO_DATA;
         return U.seqColor(v, max) || NO_DATA;
@@ -201,6 +213,10 @@ window.MapView = (function () {
     });
     legendHtml += '</div>';
     legendHtml += '<div class="ramp-labels"><span>0</span><span>≥ ' + U.num(max, 0) + (unit ? " " + U.esc(unit) : "") + '</span></div>';
+    if (data.showNotes) {
+      legendHtml += '<div class="dot-key"><span><i style="width:12px;height:9px;border-radius:2px;background:' +
+        NOTE_ONLY + '"></i>仅有风险备注（筛选窗内无事件）</span></div>';
+    }
     if (data.showBubbles) {
       legendHtml += '<div class="dot-key">' +
         '<span><i style="width:5px;height:5px"></i>2 cm</span>' +
@@ -218,11 +234,13 @@ window.MapView = (function () {
 
     if (noteEl && !failed) {
       var ev = data.events.length;
+      var noteCount = data.noteIsos ? Object.keys(data.noteIsos).length : 0;
       noteEl.innerHTML = '<b>当前筛选：</b>' + y0 + '–' + y1 + ' 年 · ' +
         (data.regionLabel || "全部区域") + ' · ' + (data.filterLabel || "全部事件") +
         ' ｜ 地图上 ' + ev + ' 个事件气泡，' +
-        Object.keys(data.byIso).length + ' 个国家/地区有收录事件（颜色最深 = ' +
-        U.esc(data.metricLabel) + ' 最高）。';
+        Object.keys(data.byIso).length + ' 个国家/地区有收录事件' +
+        (data.showNotes && noteCount ? '、' + noteCount + ' 个仅有风险备注' : '') +
+        '（颜色最深 = ' + U.esc(data.metricLabel) + ' 最高）。';
     }
   }
 

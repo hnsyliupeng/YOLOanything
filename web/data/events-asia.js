@@ -19,7 +19,7 @@ window.HAIL_EVENTS_ASIA = [
     iso2: "CN", zh: "中国", en: "China", region: "贵州 贵阳",
     lat: 26.65, lon: 106.63, size: 3, size_txt: "大如鸡蛋的冰雹（约 3 cm+）",
     deaths: 0, injuries: 0, affected: null, loss: 4.2, loss_txt: "直接经济损失 2,900 万元，4.6 万亩农作物受灾",
-    insured: null, severity: 2,
+    insured: null, severity: 3,
     summary: "贵阳多地遭遇冰雹，直接经济损失 2,900 万元，4.6 万亩农作物受灾。",
     detail: "2019 年 4 月 14 日，贵州贵阳多地遭受冰雹袭击。据中国气象局公开资料，此次过程造成直接经济损失 2,900 万元，4.6 万亩农作物受雹灾影响，是当年西南地区典型案例。同期（4 月 9 日）广西柳州融安县亦遭遇强降雨冰雹，雨棚、汽车挡风玻璃及部分历史古迹受损。",
     src: [["中国气象局科普：『数』说冰雹", "https://www.cma.gov.cn/kppd/kppdqxwq/kppdfycq/201605/t20160524_312296.html"]]

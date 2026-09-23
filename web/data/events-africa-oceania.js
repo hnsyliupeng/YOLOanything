@@ -38,7 +38,7 @@ window.HAIL_EVENTS_AFRICA_OCEANIA = [
     iso2: "AU", zh: "澳大利亚", en: "Australia", region: "布里斯班都会区",
     lat: -27.47, lon: 153.03, size: 5, size_txt: "高尔夫球大小",
     deaths: 0, injuries: null, affected: null, loss: 220, loss_txt: "保险损失 A$2.32 亿（2021 年澳洲第二贵雹灾）",
-    insured: 220, severity: 3,
+    insured: 220, severity: 4,
     summary: "布里斯班都会区遭高尔夫球大小冰雹，保险损失 A$2.32 亿。",
     detail: "2021 年 10 月 31 日，布里斯班都会区遭遇高尔夫球大小冰雹，造成约 A$2.32 亿保险损失，为当年澳大利亚第二昂贵的冰雹事件（仅次于同期新南威尔士的雹暴）。昆士兰州东南部与「冰雹走廊」高度重叠，是南半球冰雹保险损失最集中的都市区。",
     src: [["Aon：2021 Weather, Climate and Catastrophe Insight", "https://assets.aon.com/-/jssmedia/041BD6EBC8DB4AB68DB298504B61FBE5.ashx"]]

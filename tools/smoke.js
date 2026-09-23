@@ -45,7 +45,10 @@ JSDOM.fromURL(BASE, {
       "来源条目": q("#sourceList") ? q("#sourceList").children.length : -1,
       "方法段落": q("#methodBody") ? q("#methodBody").children.length : -1,
       "局限卡片": q("#limitGrid") ? q("#limitGrid").children.length : -1,
-      "年份下拉项": q("#yearFrom") ? q("#yearFrom").options.length : -1
+      "年份下拉项": q("#yearFrom") ? q("#yearFrom").options.length : -1,
+      "全球速览卡": q("#digestGrid") ? q("#digestGrid").children.length : -1,
+      "区域对照行": d.querySelectorAll("#regionCompare tbody tr").length,
+      "仅备注国家数": d.querySelectorAll("#countryTable tr.note-row").length
     };
     console.log("\n=== 渲染检查 ===");
     Object.keys(report).forEach((k) => console.log(("  " + k).padEnd(18, " "), report[k]));
@@ -96,9 +99,25 @@ JSDOM.fromURL(BASE, {
               setTimeout(() => {
                 console.log("  重置后国家表行数:", d.querySelectorAll("#countryTable tbody tr").length,
                   "· 年份:", q("#yearFrom").value + "-" + q("#yearTo").value);
-                console.log("\n=== 控制台问题 (" + errors.length + ") ===");
-                errors.slice(0, 12).forEach((e) => console.log(" -", e.slice(0, 220)));
-                process.exit(errors.length ? 1 : 0);
+                /* 仅备注国家开关（在重置后的干净状态下测试） */
+                const inc = q("#includeNotes");
+                if (inc) { inc.checked = true; inc.dispatchEvent(new window.Event("change", { bubbles: true })); }
+                setTimeout(() => {
+                  console.log("  勾选「包含仅备注国家」后国家表行数:", d.querySelectorAll("#countryTable tbody tr").length,
+                    "· 仅备注行:", d.querySelectorAll("#countryTable tr.note-row").length);
+                  const noteRow = d.querySelector("#countryTable tr.note-row");
+                  if (noteRow) noteRow.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+                  setTimeout(() => {
+                    console.log("  点击仅备注国家后面板标题:", q("#countryPanel .cp-title") ? q("#countryPanel .cp-title").textContent : "(未渲染)");
+                    console.log("  提示文字:", q("#tableHint").textContent);
+                    /* 全部仅备注国家的风险备注完整性 */
+                    const badNotes = Object.keys(window.Store.NOTES).filter((k) => !window.Store.NOTES[k].risk || !window.Store.NOTES[k].src || !window.Store.NOTES[k].src.length);
+                    console.log("  备注缺少 risk/src 的国家:", badNotes.length ? badNotes.join(",") : "(none)");
+                    console.log("\n=== 控制台问题 (" + errors.length + ") ===");
+                    errors.slice(0, 12).forEach((e) => console.log(" -", e.slice(0, 220)));
+                    process.exit(errors.length ? 1 : 0);
+                  }, 350);
+                }, 350);
               }, 400);
             }, 400);
           }, 400);

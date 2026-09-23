@@ -47,9 +47,10 @@
           2026 年 7 与 8 月西欧又接连录得 <b>21.9 亿与约 25 亿欧元</b> 的强对流损失；
           澳大利亚 2025 年 11 月雹暴达 <b>17.8 亿澳元</b>；
           中国风雹灾害年均直接经济损失约 <b>145–150 亿元人民币</b>。
-          本应用收录 <b>96 起</b> 重大事件、覆盖 <b>40 个国家/地区</b>，整合 NOAA SPC、
-          欧洲强风暴实验室 ESWD、EM-DAT、Munich Re / PERILS / CatIQ、中国应急管理部
-          及同行评审文献，提供国家尺度的交互查询。
+          本应用收录 <b>125 起</b> 重大事件，覆盖 <b>50 个国家/地区</b>，另有 <b>16 个国家/地区</b>
+          在近十年窗口内没有事件记录、只有风险备注（全球资料的真实缺口）。数据整合 NOAA SPC、欧洲强风暴
+          实验室 ESWD、EM-DAT、Munich Re / PERILS / CatIQ / ICA / IBC、中国应急管理部
+          与 25 篇同行评审文献，提供国家与区域尺度的交互查询。
         </p>
         <div class="hero-actions">
           <a class="btn primary" href="#map">进入全球地图 →</a>
@@ -64,6 +65,8 @@
     </div>
 
     <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="digest-grid" id="digestGrid"></div>
 
     <div class="insight-row" id="insightRow"></div>
   </section>
@@ -125,6 +128,10 @@
             <input type="checkbox" id="showBubbles" checked>
             <span>显示事件气泡</span>
           </label>
+          <label class="field check">
+            <input type="checkbox" id="showNotes" checked>
+            <span>标注仅有风险备注的国家</span>
+          </label>
           <button class="btn tiny" id="resetMap">重置筛选</button>
         </div>
 
@@ -173,9 +180,14 @@
           <h3>国家明细表</h3>
           <span class="muted" id="tableHint">点击表头排序</span>
         </div>
+        <label class="field check" style="margin-bottom:10px">
+          <input type="checkbox" id="includeNotes">
+          <span>包含「仅有风险备注」的国家/地区（无收录事件）</span>
+        </label>
         <div class="table-scroll" id="countryTable"></div>
       </div>
     </div>
+    <div class="card" id="regionCompare"></div>
   </section>
 
   <!-- ============ 时间演变 ============ -->
@@ -278,6 +290,8 @@
 <script src="data/events-americas.js"></script>
 <script src="data/events-africa-oceania.js"></script>
 <script src="data/country-stats.js"></script>
+<script src="data/events-extra.js"></script>
+<script src="data/series-more.js"></script>
 <script src="js/util.js"></script>
 <script src="js/store.js"></script>
 <script src="js/map.js"></script>

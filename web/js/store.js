@@ -5,13 +5,18 @@ window.Store = (function () {
   "use strict";
 
   var META = window.HAIL_META || { window: { from: 2016, to: 2026 }, sources: [], series: [], insights: [] };
+  /* 追加资料与主资料合并（第二轮扩充） */
+  META.series = (META.series || []).concat(window.HAIL_SERIES_MORE || []);
+  META.records = (META.records || []).concat(window.HAIL_RECORDS_MORE || []);
+  META.science = (META.science || []).concat(window.HAIL_SCIENCE_MORE || []);
 
   /* ---------- 1. 合并事件 ---------- */
   var RAW = [].concat(
     window.HAIL_EVENTS_ASIA || [],
     window.HAIL_EVENTS_EUROPE || [],
     window.HAIL_EVENTS_AMERICAS || [],
-    window.HAIL_EVENTS_AFRICA_OCEANIA || []
+    window.HAIL_EVENTS_AFRICA_OCEANIA || [],
+    window.HAIL_EVENTS_EXTRA || []
   );
 
   var EVENTS = RAW.map(function (e) {
@@ -51,7 +56,7 @@ window.Store = (function () {
   var NOTES = {};
   ["HAIL_COUNTRY_NOTES_ASIA", "HAIL_COUNTRY_NOTES_EUROPE",
     "HAIL_COUNTRY_NOTES_AMERICAS", "HAIL_COUNTRY_NOTES_AFRICA_OCEANIA",
-    "HAIL_COUNTRY_STATS"].forEach(function (k) {
+    "HAIL_COUNTRY_STATS", "HAIL_COUNTRY_NOTES_EXTRA"].forEach(function (k) {
       var o = window[k];
       if (o) Object.keys(o).forEach(function (iso) { NOTES[iso] = o[iso]; });
     });
@@ -235,12 +240,96 @@ window.Store = (function () {
     return rows;
   }
 
-  /* ---------- 10. 导出 ---------- */
+  /* ---------- 10. 仅有风险备注（当前筛选下无事件）的国家 ---------- */
+  function noteOnlyCountries(evList) {
+    var list = evList || filtered();
+    var have = {};
+    list.forEach(function (e) { if (e.iso2) have[e.iso2] = 1; });
+    return Object.keys(NOTES).filter(function (iso) {
+      return !have[iso] && U.COUNTRIES[iso];
+    }).map(function (iso) {
+      var c = U.country(iso);
+      return {
+        iso2: iso, zh: U.countryName(iso), continent: c.c, continentLabel: U.continentLabel(c.c),
+        count: 0, loss: 0, lossCount: 0, maxSize: null, deaths: 0, injuries: 0, casualties: 0,
+        severitySum: 0, severityMax: 0, severityAvg: 0, top: null, events: [],
+        note: NOTES[iso] || null, noteOnly: true
+      };
+    }).sort(function (a, b) { return a.zh.localeCompare(b.zh, "zh-CN"); });
+  }
+
+  function allCountries(includeNotes, evList) {
+    var cs = countries();
+    if (includeNotes) {
+      var have = {};
+      cs.forEach(function (c) { have[c.iso2] = 1; });
+      noteOnlyCountries(evList).forEach(function (c) { if (!have[c.iso2]) cs.push(c); });
+    }
+    return cs;
+  }
+
+  /* ---------- 11. 区域对照 ---------- */
+  var CONTINENT_ORDER = ["Asia", "Europe", "North America", "South America", "Africa", "Oceania"];
+
+  function regionStats() {
+    var cs = allCountries(false);
+    return CONTINENT_ORDER.map(function (key) {
+      var list = cs.filter(function (c) { return c.continent === key; });
+      var agg = { key: key, label: U.continentLabel(key), countries: list.length,
+        events: 0, deaths: 0, injuries: 0, casualties: 0, loss: 0, lossCount: 0,
+        maxSize: null, maxEvent: null, topLoss: null, topLossCountry: null };
+      list.forEach(function (c) {
+        agg.events += c.count;
+        agg.deaths += c.deaths;
+        agg.injuries += c.injuries;
+        agg.casualties += c.casualties;
+        agg.loss += c.loss || 0;
+        agg.lossCount += c.lossCount;
+        if (c.maxSize !== null) {
+          if (agg.maxSize === null || c.maxSize > agg.maxSize) {
+            agg.maxSize = c.maxSize;
+            agg.maxEvent = (c.events.filter(function (e) { return e.size === c.maxSize; })[0]) || c.top;
+          }
+        }
+        var topLossEv = c.events.filter(function (e) { return e.loss !== null; })
+          .sort(function (a, b) { return b.loss - a.loss; })[0];
+        if (topLossEv && (!agg.topLoss || topLossEv.loss > agg.topLoss.loss)) {
+          agg.topLoss = topLossEv;
+          agg.topLossCountry = c.zh;
+        }
+      });
+      return agg;
+    });
+  }
+
+  /* ---------- 12. 全局「十年之最」（随筛选变化） ---------- */
+  function extremes() {
+    var ev = filtered();
+    var out = {};
+    ev.forEach(function (e) {
+      if (e.loss !== null && (!out.costliest || e.loss > out.costliest.loss)) out.costliest = e;
+      if (!out.deadliest || e.casualties > out.deadliest.casualties) out.deadliest = e;
+      if (e.size !== null && (!out.largest || e.size > out.largest.size)) out.largest = e;
+      if (e.casualties > 0 && (!out.bloodiest || e.deaths > out.bloodiest.deaths)) out.bloodiest = e;
+    });
+    var cs = countries();
+    out.mostActive = cs.slice().sort(function (a, b) { return b.count - a.count; })[0] || null;
+    out.biggestLossCountry = cs.slice().filter(function (c) { return c.loss; })
+      .sort(function (a, b) { return b.loss - a.loss; })[0] || null;
+    out.noteOnly = noteOnlyCountries(ev);
+    out.multi = ev.filter(function (e) { return e.continent === "Multi"; });
+    return out;
+  }
+
+  /* ---------- 13. 导出 ---------- */
   return {
     META: META, EVENTS: EVENTS, NOTES: NOTES, SERIES: SERIES,
     CONTINENTS: CONTINENTS, DATA_MIN: DATA_MIN, DATA_MAX: DATA_MAX,
     state: state, subscribe: subscribe, setState: setState, reset: reset,
     filtered: filtered, countries: countries, metricValue: metricValue,
-    metricMax: metricMax, kpis: kpis, timeline: timeline
+    metricMax: metricMax, kpis: kpis, timeline: timeline,
+    noteOnlyCountries: noteOnlyCountries, allCountries: allCountries,
+    regionStats: regionStats, extremes: extremes,
+    CONTINENT_ORDER: CONTINENT_ORDER
   };
 })();

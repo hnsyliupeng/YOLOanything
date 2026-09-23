@@ -120,7 +120,7 @@ window.HAIL_EVENTS_EUROPE = [
     iso2: "CH", zh: "瑞士", en: "Switzerland", region: "瑞士北部与中部高地",
     lat: 47.20, lon: 7.60, size: 7, size_txt: "最大冰雹超过 7 cm",
     deaths: 0, injuries: null, affected: null, loss: 1150, loss_txt: "保险损失估计 7.5–12.5 亿欧元（瑞士部分）",
-    insured: 1150, severity: 4,
+    insured: 1150, severity: 5,
     summary: "瑞士遭 7 cm+ 冰雹袭击，成为 2026 年 8 月末西欧强对流事件中保险损失最高的国家。",
     detail: "2026 年 8 月 28 日，来自法国的强雷暴与超级单体移入瑞士，最大冰雹超过 7 cm，住宅与车辆损失集中。Gallagher Re 估计瑞士保险损失 7.5–12.5 亿欧元，在本次三国事件中最高；损失的绝大部分由冰雹驱动，直接经济损失总额更高。",
     src: [["Artemis：Late August western Europe SCS and hail — Gallagher Re", "https://www.artemis.bm/news/late-august-western-europe-scs-and-hail-to-drive-eur-2-5bn-insured-loss-gallagher-re/"]]

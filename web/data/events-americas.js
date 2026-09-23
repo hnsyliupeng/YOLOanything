@@ -2,16 +2,6 @@
 window.HAIL_EVENTS_AMERICAS = [
   /* ---------- 美国 ---------- */
   {
-    id: "us-2017-denver", date: "2017-05-08", precision: "day",
-    iso2: "US", zh: "美国", en: "United States", region: "科罗拉多州 丹佛都会区",
-    lat: 39.74, lon: -104.99, size: 7.5, size_txt: "冰雹达棒球大小（约 7–7.5 cm）",
-    deaths: 0, injuries: null, affected: null, loss: 2200, loss_txt: "保险损失约 22 亿美元（行业估算，科罗拉多州史上最贵雹暴）",
-    insured: 2200, severity: 5,
-    summary: "丹佛都会区遭遇该州历史上损失最大的雹暴，棒球大小冰雹造成约 22 亿美元保险损失。",
-    detail: "2017 年 5 月 8 日，科罗拉多州丹佛都会区遭强烈雹暴袭击，冰雹最大达棒球大小，造成住宅屋面、车辆与商业建筑大范围损坏。该事件通常被列为科罗拉多州历史上损失最大的冰雹事件，保险损失约 22 亿美元（不同来源与调整口径略有差异），是「单次雹暴造成十亿美元级损失」的典型案例。",
-    src: [["Wikipedia：List of costly or deadly hailstorms", "https://en.wikipedia.org/wiki/List_of_costly_or_deadly_hailstorms"], ["Cotality 2026 年强对流风暴风险报告（经 Claims Journal 报道）", "https://www.claimsjournal.com/news/national/2026/09/16/340002.htm"]]
-  },
-  {
     id: "us-2021-hondo", date: "2021-04-28", precision: "day",
     iso2: "US", zh: "美国", en: "United States", region: "德克萨斯州 Hondo",
     lat: 29.35, lon: -99.14, size: 16.4, size_txt: "直径 6.46 英寸（16.4 cm）— 当时德州纪录",
@@ -46,7 +36,7 @@ window.HAIL_EVENTS_AMERICAS = [
     iso2: "US", zh: "美国", en: "United States", region: "德克萨斯州 Fort Bend 县（Fighting Jays 光伏电站）",
     lat: 29.40, lon: -95.90, size: 7, size_txt: "冰雹直径可达网球至棒球大小",
     deaths: 0, injuries: null, affected: null, loss: 300, loss_txt: "单个光伏项目修复成本预计达数亿美元",
-    insured: 300, severity: 3,
+    insured: 300, severity: 4,
     summary: "德州大型光伏电站被冰雹重创，DNV 估计 2018 年以来德州光伏雹灾损失已超过 6 亿美元。",
     detail: "2024 年 3 月，德克萨斯州 Fort Bend 县 Fighting Jays 光伏电站遭冰雹袭击，预计单个项目的修复成本达数亿美元。DNV 估计，2018 年以来德州光伏设施因冰雹造成的损失已超过 6 亿美元。该事件使「光伏组件抗雹能力」成为新能源保险与工程设计的热点议题。",
     src: [["Cotality 2026 年报告（经 Claims Journal 报道）", "https://www.claimsjournal.com/news/national/2026/09/16/340002.htm"]]
