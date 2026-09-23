@@ -410,6 +410,12 @@
 
   /* ---------------- 启动 ---------------- */
   function boot() {
+    // 确保弹窗初始为隐藏，避免缓存导致空白遮罩
+    try {
+      var mm = document.getElementById("modalMask");
+      if (mm) mm.hidden = true;
+      document.body.style.overflow = "";
+    } catch (_) { }
     renderStatic();
     initYearSelects();
     Tables.setDigestHandlers(function (iso) { selectCountry(iso); }, function (id) { openEvent(id); });
