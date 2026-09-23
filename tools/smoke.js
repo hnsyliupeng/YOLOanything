@@ -77,9 +77,30 @@ JSDOM.fromURL(BASE, {
           setTimeout(() => {
             console.log("再筛 ≥10cm 后事件表行数:", d.querySelectorAll("#eventTable tbody tr").length,
               "· 地图气泡:", d.querySelectorAll("#worldMap circle").length);
-            console.log("\n=== 控制台问题 (" + errors.length + ") ===");
-            errors.slice(0, 12).forEach((e) => console.log(" -", e.slice(0, 220)));
-            process.exit(0);
+
+            /* 指标切换 / 区域筛选 / 年份裁剪 */
+            const sizeSeg = d.querySelector('#mapMetric button[data-m="size"]');
+            if (sizeSeg) sizeSeg.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+            const region = q("#regionFilter");
+            if (region) { region.value = "Africa"; region.dispatchEvent(new window.Event("change", { bubbles: true })); }
+            const yf = q("#yearFrom");
+            if (yf) { yf.value = "2024"; yf.dispatchEvent(new window.Event("change", { bubbles: true })); }
+            setTimeout(() => {
+              const fills = new Set([...d.querySelectorAll("#worldMap path.country")].map((p) => p.getAttribute("fill")));
+              console.log("\n切换「最大冰雹/非洲/2024 起」后：");
+              console.log("  地图色阶种类:", fills.size, "· 图例:", q("#mapLegend").textContent.trim().slice(0, 30));
+              console.log("  国家表行数:", d.querySelectorAll("#countryTable tbody tr").length,
+                "· 范围提示:", q("#rangeNote").textContent.trim().slice(0, 60));
+              const reset = q("#resetMap");
+              if (reset) reset.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+              setTimeout(() => {
+                console.log("  重置后国家表行数:", d.querySelectorAll("#countryTable tbody tr").length,
+                  "· 年份:", q("#yearFrom").value + "-" + q("#yearTo").value);
+                console.log("\n=== 控制台问题 (" + errors.length + ") ===");
+                errors.slice(0, 12).forEach((e) => console.log(" -", e.slice(0, 220)));
+                process.exit(errors.length ? 1 : 0);
+              }, 400);
+            }, 400);
           }, 400);
         }, 400);
       }, 400);
