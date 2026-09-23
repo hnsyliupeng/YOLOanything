@@ -190,9 +190,23 @@
 
   function openEvent(id) {
     var e = S.EVENTS.filter(function (x) { return x.id === id; })[0];
-    if (!e) return;
+    if (!e) {
+      console.warn("[openEvent] 未找到事件", id);
+      // 仍打开弹窗并显示提示，避免空白
+      var mask0 = document.getElementById("modalMask");
+      var body0 = document.getElementById("modalBody");
+      if (body0) body0.innerHTML = '<div class="m-head"><h3>未找到事件</h3><p class="muted">ID：' + U.esc(id || "") + '</p></div>';
+      if (mask0) { mask0.hidden = false; document.body.style.overflow = "hidden"; }
+      return;
+    }
     selectedEventId = id;
-    Tables.renderEventModal("#modalBody", e, function (iso) { closeModal(); selectedIso = iso; render(); });
+    try {
+      Tables.renderEventModal("#modalBody", e, function (iso) { closeModal(); selectedIso = iso; render(); });
+    } catch (err) {
+      console.error("[openEvent] renderEventModal 异常", err);
+      var body = document.getElementById("modalBody");
+      if (body) body.innerHTML = '<div class="m-head"><h3>' + U.esc(e.zh) + '</h3><p class="muted">详情渲染失败：' + U.esc(err.message || String(err)) + '</p></div>';
+    }
     var mask = document.getElementById("modalMask");
     if (mask) { mask.hidden = false; document.body.style.overflow = "hidden"; }
     render();

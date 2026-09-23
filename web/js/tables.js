@@ -458,76 +458,91 @@ window.Tables = (function () {
 
   /* ---------- 事件详情弹窗 ---------- */
   function renderEventModal(sel, e, onCountry) {
-    if (!e) return;
-    var chips = [];
-    chips.push('<span class="chip grey">' + U.esc(U.continentLabel(e.continent)) + '</span>');
-    chips.push('<span class="chip ' + (e.severity >= 4 ? "danger" : (e.severity === 3 ? "warn" : "grey")) + '">严重度 ' +
-      e.severity + " · " + U.sevLabel(e.severity) + '</span>');
-    if (e.size && e.size >= 10) chips.push('<span class="chip danger">巨型冰雹 ≥10 cm</span>');
-    else if (e.size && e.size >= 5) chips.push('<span class="chip warn">特大冰雹 ≥5 cm</span>');
-    if (e.casualties) chips.push('<span class="chip danger">人员伤亡 ' + e.casualties + '</span>');
-    if (e.loss) chips.push('<span class="chip">金额数据: ' + U.moneyShort(e.loss) + '</span>');
-    if (e.insured && e.loss && e.insured >= e.loss * 0.9) chips.push('<span class="chip grey">保险损失口径</span>');
-
-    var stats = [
-      { l: "最大冰雹直径", v: e.size ? U.num(e.size, 0) + " cm" : "未记录" },
-      { l: "死亡 / 受伤", v: (e.deaths === null ? "—" : e.deaths) + " / " + (e.injuries === null ? "—" : e.injuries) },
-      { l: "经济损失", v: e.loss ? U.moneyShort(e.loss) : "未量化" },
-      { l: "受灾人口", v: e.affected ? U.num(e.affected) + " 人" : "—" }
-    ];
-
-    var html = '<div class="m-head"><h3 id="modalTitle">' + U.esc(e.zh) + ' · ' + U.esc(e.region || "") + '</h3>' +
-      '<div class="m-meta">' + U.esc(U.fmtDate(e)) + ' ｜ 精度：' + U.esc({
-        day: "具体日期", month: "月度汇总", season: "年度/季汇总", multi: "多日过程"
-      }[e.precision] || e.precision) + (e.iso2 ? ' ｜ 点击国家名可查看国家档案' : ' ｜ 跨国事件') + '</div></div>' +
-      '<div class="m-chips">' + chips.join("") + '</div>' +
-      '<div class="m-stats">' + stats.map(function (s) {
-        return '<div class="m-stat"><div class="s-label">' + U.esc(s.l) + '</div><div class="s-value">' + U.esc(s.v) + '</div></div>';
-      }).join("") + '</div>' +
-      '<div class="m-body">' +
-      (e.summary ? '<p><b>' + U.esc(e.summary) + '</b></p>' : '') +
-      (e.detail ? '<p>' + U.esc(e.detail) + '</p>' : '') +
-      (e.size_txt ? '<p class="muted">冰雹规模：' + U.esc(e.size_txt) + '</p>' : '') +
-      (e.loss_txt ? '<p class="muted">损失口径：' + U.esc(e.loss_txt) + '</p>' : '') +
-      (e.iso2 ? '<p><button class="btn tiny" data-iso="' + U.esc(e.iso2) + '">查看 ' + U.esc(e.zh) + ' 国家档案</button></p>' : '') +
-      '</div>';
-
-    if (e.lat && e.lon) {
-      html += '<div class="m-map"><svg id="modalMap" viewBox="0 0 640 220" style="width:100%;display:block"></svg></div>';
+    var host = document.querySelector(sel);
+    if (!host) return;
+    if (!e) {
+      host.innerHTML = '<div class="m-head"><h3>未找到事件</h3><p class="muted">传入的事件 ID 不存在或已被过滤。</p></div>';
+      return;
     }
-    if (e.src && e.src.length) {
-      html += '<div class="m-src"><h4>资料来源</h4><ul>' +
-        e.src.map(function (s) {
-          return '<li><a href="' + U.esc(s[1]) + '" target="_blank" rel="noopener">' + U.esc(s[0]) + '</a></li>';
-        }).join("") + '</ul></div>';
-    }
-    var host = set(sel, html);
-    if (host) {
+    try {
+      var chips = [];
+      chips.push('<span class="chip grey">' + U.esc(U.continentLabel(e.continent)) + '</span>');
+      chips.push('<span class="chip ' + (e.severity >= 4 ? "danger" : (e.severity === 3 ? "warn" : "grey")) + '">严重度 ' +
+        e.severity + " · " + U.sevLabel(e.severity) + '</span>');
+      if (e.size && e.size >= 10) chips.push('<span class="chip danger">巨型冰雹 ≥10 cm</span>');
+      else if (e.size && e.size >= 5) chips.push('<span class="chip warn">特大冰雹 ≥5 cm</span>');
+      if (e.casualties) chips.push('<span class="chip danger">人员伤亡 ' + e.casualties + '</span>');
+      if (e.loss) chips.push('<span class="chip">金额数据: ' + U.moneyShort(e.loss) + '</span>');
+      if (e.insured && e.loss && e.insured >= e.loss * 0.9) chips.push('<span class="chip grey">保险损失口径</span>');
+
+      var stats = [
+        { l: "最大冰雹直径", v: e.size ? U.num(e.size, 0) + " cm" : "未记录" },
+        { l: "死亡 / 受伤", v: (e.deaths === null ? "—" : e.deaths) + " / " + (e.injuries === null ? "—" : e.injuries) },
+        { l: "经济损失", v: e.loss ? U.moneyShort(e.loss) : "未量化" },
+        { l: "受灾人口", v: e.affected ? U.num(e.affected) + " 人" : "—" }
+      ];
+
+      var html = '<div class="m-head"><h3 id="modalTitle">' + U.esc(e.zh) + ' · ' + U.esc(e.region || "") + '</h3>' +
+        '<div class="m-meta">' + U.esc(U.fmtDate(e)) + ' ｜ 精度：' + U.esc({
+          day: "具体日期", month: "月度汇总", season: "年度/季汇总", multi: "多日过程"
+        }[e.precision] || e.precision) + (e.iso2 ? ' ｜ 点击国家名可查看国家档案' : ' ｜ 跨国事件') + '</div></div>' +
+        '<div class="m-chips">' + chips.join("") + '</div>' +
+        '<div class="m-stats">' + stats.map(function (s) {
+          return '<div class="m-stat"><div class="s-label">' + U.esc(s.l) + '</div><div class="s-value">' + U.esc(s.v) + '</div></div>';
+        }).join("") + '</div>' +
+        '<div class="m-body">' +
+        (e.summary ? '<p><b>' + U.esc(e.summary) + '</b></p>' : '') +
+        (e.detail ? '<p>' + U.esc(e.detail) + '</p>' : '') +
+        (e.size_txt ? '<p class="muted">冰雹规模：' + U.esc(e.size_txt) + '</p>' : '') +
+        (e.loss_txt ? '<p class="muted">损失口径：' + U.esc(e.loss_txt) + '</p>' : '') +
+        (e.iso2 ? '<p><button class="btn tiny" data-iso="' + U.esc(e.iso2) + '">查看 ' + U.esc(e.zh) + ' 国家档案</button></p>' : '') +
+        '</div>';
+
+      if (e.lat && e.lon) {
+        html += '<div class="m-map"><svg id="modalMap" viewBox="0 0 640 220" style="width:100%;display:block"></svg></div>';
+      }
+      if (e.src && e.src.length) {
+        html += '<div class="m-src"><h4>资料来源</h4><ul>' +
+          e.src.map(function (s) {
+            return '<li><a href="' + U.esc(s[1]) + '" target="_blank" rel="noopener">' + U.esc(s[0]) + '</a></li>';
+          }).join("") + '</ul></div>';
+      }
+      host.innerHTML = html;
       var b = host.querySelector("button[data-iso]");
       if (b) b.addEventListener("click", function () { onCountry && onCountry(b.getAttribute("data-iso")); });
-      if (e.lat && e.lon) drawMiniMap(host.querySelector("#modalMap"), e);
+      if (e.lat && e.lon) {
+        try { drawMiniMap(host.querySelector("#modalMap"), e); } catch (err2) { console.warn("[modalMap] 渲染失败", err2); }
+      }
+    } catch (err) {
+      console.error("[renderEventModal] 失败", err);
+      host.innerHTML = '<div class="m-head"><h3>' + U.esc((e && e.zh) ? e.zh : "事件") + '</h3><p class="muted">详情渲染失败：' + U.esc(err.message || String(err)) + '</p></div>' +
+        '<div class="m-body"><p>' + U.esc((e && e.summary) ? e.summary : "") + '</p><p class="muted">' + U.esc((e && e.detail) ? e.detail.slice(0, 200) : "") + '</p></div>';
     }
   }
 
   /* 弹窗内的定位小地图（仅显示该事件所在区域） */
   function drawMiniMap(svgNode, e) {
-    if (!svgNode || typeof d3 === "undefined") return;
-    var w = 640, h = 220;
-    var proj = d3.geoNaturalEarth1().rotate([-e.lon, 0]).center([0, U.clamp(e.lat, -60, 60)])
-      .scale(240).translate([w / 2, h / 2]);
-    var p = d3.geoPath(proj);
-    var g = d3.select(svgNode);
-    g.append("path").datum({ type: "Sphere" }).attr("d", p).attr("fill", "#eff6ff").attr("stroke", "#dbe6f3");
-    g.append("path").datum(d3.geoGraticule10()).attr("d", p).attr("fill", "none").attr("stroke", "#dbe6f5").attr("stroke-width", 0.5);
-    if (window.__HAIL_LAND__) {
-      g.append("path").datum(window.__HAIL_LAND__).attr("d", p).attr("fill", "#e2e8f0").attr("stroke", "#ffffff").attr("stroke-width", 0.4);
-    }
-    var xy = proj([e.lon, e.lat]);
-    if (xy) {
-      g.append("circle").attr("cx", xy[0]).attr("cy", xy[1]).attr("r", 7)
-        .attr("fill", "#dc2626").attr("fill-opacity", .85).attr("stroke", "#fff").attr("stroke-width", 2);
-      g.append("text").attr("x", xy[0] + 12).attr("y", xy[1] + 4).attr("class", "lbl")
-        .text(e.zh + (e.size ? " · " + U.num(e.size, 0) + " cm" : ""));
+    try {
+      if (!svgNode || typeof d3 === "undefined") return;
+      var w = 640, h = 220;
+      var proj = d3.geoNaturalEarth1().rotate([-e.lon, 0]).center([0, U.clamp(e.lat, -60, 60)])
+        .scale(240).translate([w / 2, h / 2]);
+      var p = d3.geoPath(proj);
+      var g = d3.select(svgNode);
+      g.append("path").datum({ type: "Sphere" }).attr("d", p).attr("fill", "#eff6ff").attr("stroke", "#dbe6f3");
+      g.append("path").datum(d3.geoGraticule10()).attr("d", p).attr("fill", "none").attr("stroke", "#dbe6f5").attr("stroke-width", 0.5);
+      if (window.__HAIL_LAND__) {
+        g.append("path").datum(window.__HAIL_LAND__).attr("d", p).attr("fill", "#e2e8f0").attr("stroke", "#ffffff").attr("stroke-width", 0.4);
+      }
+      var xy = proj([e.lon, e.lat]);
+      if (xy) {
+        g.append("circle").attr("cx", xy[0]).attr("cy", xy[1]).attr("r", 7)
+          .attr("fill", "#dc2626").attr("fill-opacity", .85).attr("stroke", "#fff").attr("stroke-width", 2);
+        g.append("text").attr("x", xy[0] + 12).attr("y", xy[1] + 4).attr("class", "lbl")
+          .text(e.zh + (e.size ? " · " + U.num(e.size, 0) + " cm" : ""));
+      }
+    } catch (err) {
+      console.warn("[drawMiniMap] 失败", err);
     }
   }
 
