@@ -17,7 +17,8 @@ window.Store = (function () {
     window.HAIL_EVENTS_AMERICAS || [],
     window.HAIL_EVENTS_AFRICA_OCEANIA || [],
     window.HAIL_EVENTS_EXTRA || [],
-    window.HAIL_EVENTS_PLUS || []
+    window.HAIL_EVENTS_PLUS || [],
+    window.HAIL_EVENTS_PLUS2 || []
   );
 
   var EVENTS = RAW.map(function (e) {
@@ -58,10 +59,46 @@ window.Store = (function () {
   ["HAIL_COUNTRY_NOTES_ASIA", "HAIL_COUNTRY_NOTES_EUROPE",
     "HAIL_COUNTRY_NOTES_AMERICAS", "HAIL_COUNTRY_NOTES_AFRICA_OCEANIA",
     "HAIL_COUNTRY_STATS", "HAIL_COUNTRY_NOTES_EXTRA",
-    "HAIL_COUNTRY_NOTES_PLUS"].forEach(function (k) {
+    "HAIL_COUNTRY_NOTES_PLUS", "HAIL_COUNTRY_NOTES_PLUS2"].forEach(function (k) {
       var o = window[k];
       if (o) Object.keys(o).forEach(function (iso) { NOTES[iso] = o[iso]; });
     });
+
+  /* ---------- 省州级聚合（美/中/澳/巴/印/阿） ---------- */
+  function stateBreakdown(iso2) {
+    var lex = (window.HAIL_STATE_LEXICON && window.HAIL_STATE_LEXICON[iso2]) || null;
+    if (!lex) return [];
+    var evList = filtered().filter(function (e) { return e.iso2 === iso2; });
+    var map = {};
+    lex.forEach(function (st) { map[st.key] = { key: st.key, zh: st.zh, en: st.en, count: 0, maxSize: null, deaths: 0, injuries: 0, loss: 0, lossCount: 0, events: [] }; });
+    evList.forEach(function (e) {
+      var region = (e.region || "") + " " + (e.raw && e.raw.region || "") + " " + e.zh;
+      var matched = [];
+      lex.forEach(function (st) {
+        var allNames = [st.zh, st.en].concat(st.aliases || []);
+        for (var i = 0; i < allNames.length; i++) {
+          if (allNames[i] && region.indexOf(allNames[i]) >= 0) { matched.push(st.key); break; }
+        }
+      });
+      if (matched.length === 0) matched = ["Multi"];
+      // 去重
+      var uniq = {};
+      matched.forEach(function (k) { uniq[k] = 1; });
+      Object.keys(uniq).forEach(function (k) {
+        if (!map[k]) map[k] = { key: k, zh: k, en: k, count: 0, maxSize: null, deaths: 0, injuries: 0, loss: 0, lossCount: 0, events: [] };
+        var s = map[k];
+        s.count++;
+        s.events.push(e);
+        if (e.size !== null) s.maxSize = s.maxSize === null ? e.size : Math.max(s.maxSize, e.size);
+        s.deaths += e.deaths || 0;
+        s.injuries += e.injuries || 0;
+        if (e.loss !== null) { s.loss += e.loss; s.lossCount++; }
+      });
+    });
+    var arr = Object.keys(map).map(function (k) { return map[k]; }).filter(function (s) { return s.count > 0; });
+    arr.sort(function (a, b) { return b.count - a.count; });
+    return arr;
+  }
 
   /* 备注中的风险等级 → 1–5 数值（用于地图与速查表排序） */
   function riskScore(note) {
@@ -347,6 +384,7 @@ window.Store = (function () {
     metricMax: metricMax, kpis: kpis, timeline: timeline,
     noteOnlyCountries: noteOnlyCountries, allCountries: allCountries,
     regionStats: regionStats, extremes: extremes, riskScore: riskScore,
+    stateBreakdown: stateBreakdown,
     CONTINENT_ORDER: CONTINENT_ORDER
   };
 })();

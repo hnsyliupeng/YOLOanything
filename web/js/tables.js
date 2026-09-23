@@ -340,6 +340,31 @@ window.Tables = (function () {
         stat("最高严重度", U.sevLabel(c.severityMax)) +
         stat("首次 / 最近", c.events.length ? (minYear(c.events) + " / " + maxYear(c.events)) : "—") +
         '</div>';
+
+      // 省州级钻取（美/中/澳/巴/印/阿/南非/泰国等）
+      try {
+        if (window.Store && Store.stateBreakdown && window.HAIL_STATE_LEXICON && HAIL_STATE_LEXICON[c.iso2]) {
+          var sb = Store.stateBreakdown(c.iso2);
+          if (sb && sb.length) {
+            html += '<div class="cp-block-title">省州级分布（基于 region 关键词匹配 · ' + U.esc(c.zh) + '）</div>';
+            html += '<div class="table-scroll" style="max-height:220px"><table><thead><tr><th>省/州</th><th class="num">事件</th><th class="num">最大冰雹</th><th class="num">死亡/受伤</th><th>损失</th></tr></thead><tbody>';
+            html += sb.slice(0, 12).map(function (s) {
+              return '<tr><td><span class="cell-strong">' + U.esc(s.zh) + '</span><div class="cell-sub">' + U.esc(s.en) + '</div></td>' +
+                '<td class="num">' + s.count + '</td>' +
+                '<td class="num">' + (s.maxSize ? U.num(s.maxSize, 0) + ' cm' : '—') + '</td>' +
+                '<td class="num">' + s.deaths + ' / ' + s.injuries + '</td>' +
+                '<td>' + (s.loss ? U.moneyShort(s.loss) : '—') + (s.lossCount ? '<div class="cell-sub">' + s.lossCount + ' 起有数据</div>' : '') + '</td></tr>';
+            }).join('') + '</tbody></table></div>';
+            if (sb.length > 12) html += '<p class="muted">另有 ' + (sb.length - 12) + ' 个省州未在上表展示（事件较少）。</p>';
+            var maxC = sb[0] ? sb[0].count : 1;
+            html += '<div class="bar-list" style="margin-top:8px">' + sb.slice(0, 8).map(function (s) {
+              var w = Math.max(4, Math.round(s.count / maxC * 100));
+              return '<div class="bar-row" style="cursor:default"><span class="b-name">' + U.esc(s.zh) + '</span><span class="b-track"><i class="b-fill" style="width:' + w + '%;background:' + U.regionColor(c.continent) + '"></i></span><span class="b-val">' + s.count + ' 起</span></div>';
+            }).join('') + '</div>';
+          }
+        }
+      } catch (e) { console.warn('stateBreakdown render fail', e); }
+
       html += '<div class="cp-block-title">收录事件（按时间倒序）</div>';
       var evs = c.events.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; });
       html += evs.slice(0, 8).map(function (e) {
