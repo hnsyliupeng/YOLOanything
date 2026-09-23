@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全球冰雹风暴灾害图谱 · 近十年（2016–2026）</title>
+<meta name="description" content="基于 NOAA SPC、ESWD、EM-DAT、中国应急管理部、Munich Re 等公开资料的全球冰雹灾害交互式可视化（近十年）。">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ 顶部导航栏 ============ -->
+<header class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark">◈</span>
+      <span class="brand-text">
+        <strong>全球冰雹灾害图谱</strong>
+        <em>Global Hailstorm Hazard Atlas · 2016–2026</em>
+      </span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#overview" class="active">概览</a>
+      <a href="#map">全球地图</a>
+      <a href="#ranking">国家排行</a>
+      <a href="#timeline">时间演变</a>
+      <a href="#events">事件库</a>
+      <a href="#science">科学认知</a>
+      <a href="#method">数据与方法</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="展开导航">☰</button>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ 概览 ============ -->
+  <section class="section" id="overview">
+    <div class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">深度调研 · 全球多源资料整合</p>
+        <h1>冰雹：被低估的“次生”巨灾</h1>
+        <p class="lead">
+          近十年（2016–2026），冰雹从“局地天气现象”升级为全球保险业增长最快的灾害之一：
+          欧洲单季冰雹保险损失突破 <b>59 亿欧元</b>（2023 年意大利），
+          加拿大卡尔加里一次雹暴最终保险损失 <b>34 亿加元</b>（2024），
+          2026 年 7 与 8 月西欧又接连录得 <b>21.9 亿与约 25 亿欧元</b> 的强对流损失；
+          澳大利亚 2025 年 11 月雹暴达 <b>17.8 亿澳元</b>；
+          中国风雹灾害年均直接经济损失约 <b>145–150 亿元人民币</b>。
+          本应用收录 <b>96 起</b> 重大事件、覆盖 <b>40 个国家/地区</b>，整合 NOAA SPC、
+          欧洲强风暴实验室 ESWD、EM-DAT、Munich Re / PERILS / CatIQ、中国应急管理部
+          及同行评审文献，提供国家尺度的交互查询。
+        </p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#map">进入全球地图 →</a>
+          <a class="btn ghost" href="#method">查看数据来源与口径</a>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="ice-ball big"></div>
+        <div class="ice-ball mid"></div>
+        <div class="ice-ball small"></div>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="insight-row" id="insightRow"></div>
+  </section>
+
+  <!-- ============ 全球地图 ============ -->
+  <section class="section" id="map">
+    <header class="section-head">
+      <div>
+        <h2>全球冰雹灾害地图</h2>
+        <p class="sub">点击国家查看该国事件明细；可切换指标、时间窗与图层。浅色底图，色阶为对数分级。</p>
+      </div>
+      <div class="toolbar">
+        <div class="seg" id="mapMetric" role="tablist">
+          <button data-m="count" class="active">事件数量</button>
+          <button data-m="severity">综合严重度</button>
+          <button data-m="size">最大冰雹直径</button>
+          <button data-m="loss">经济损失</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="map-layout">
+      <div class="map-card">
+        <div class="map-toolbar">
+          <label class="field">
+            <span>起始年份</span>
+            <select id="yearFrom"></select>
+          </label>
+          <label class="field">
+            <span>结束年份</span>
+            <select id="yearTo"></select>
+          </label>
+          <label class="field">
+            <span>区域</span>
+            <select id="regionFilter">
+              <option value="all">全部区域</option>
+              <option value="Asia">亚洲</option>
+              <option value="Europe">欧洲</option>
+              <option value="North America">北美洲</option>
+              <option value="South America">南美洲</option>
+              <option value="Africa">非洲</option>
+              <option value="Oceania">大洋洲</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>最小冰雹直径</span>
+            <select id="sizeFilter">
+              <option value="0">不限</option>
+              <option value="2">≥ 2 cm（大冰雹）</option>
+              <option value="5">≥ 5 cm（特大冰雹）</option>
+              <option value="10">≥ 10 cm（巨型冰雹）</option>
+            </select>
+          </label>
+          <label class="field check">
+            <input type="checkbox" id="casualtyOnly">
+            <span>仅有人员伤亡</span>
+          </label>
+          <label class="field check">
+            <input type="checkbox" id="showBubbles" checked>
+            <span>显示事件气泡</span>
+          </label>
+          <button class="btn tiny" id="resetMap">重置筛选</button>
+        </div>
+
+        <div class="map-wrap">
+          <svg id="worldMap" role="img" aria-label="全球冰雹灾害分布地图"></svg>
+          <div class="map-legend" id="mapLegend"></div>
+          <div class="map-tip" id="mapTip" hidden></div>
+          <div class="map-note" id="rangeNote"></div>
+        </div>
+      </div>
+
+      <aside class="country-panel" id="countryPanel">
+        <div class="cp-empty">
+          <h3>国家档案</h3>
+          <p>点击地图上的国家或下方排行榜中的条目，查看该国的冰雹灾害记录、灾情指标与资料来源。</p>
+          <ul class="cp-hint">
+            <li>颜色越深 = 所选指标越高</li>
+            <li>圆点大小 = 单次事件最大冰雹直径</li>
+            <li>圆点颜色 = 事件年份（越新越偏暖色）</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 国家排行 ============ -->
+  <section class="section" id="ranking">
+    <header class="section-head">
+      <div>
+        <h2>国家排行与对照</h2>
+        <p class="sub">同一套筛选条件下的横向比较；条形图取前 12 位，表格可排序。</p>
+      </div>
+      <div class="toolbar">
+        <div class="seg" id="rankMetric">
+          <button data-m="count" class="active">事件数</button>
+          <button data-m="size">最大直径</button>
+          <button data-m="casualties">人员伤亡</button>
+          <button data-m="loss">经济损失</button>
+        </div>
+      </div>
+    </header>
+    <div class="rank-layout">
+      <div class="card" id="rankBars"></div>
+      <div class="card">
+        <div class="card-head">
+          <h3>国家明细表</h3>
+          <span class="muted" id="tableHint">点击表头排序</span>
+        </div>
+        <div class="table-scroll" id="countryTable"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 时间演变 ============ -->
+  <section class="section" id="timeline">
+    <header class="section-head">
+      <div>
+        <h2>时间演变（2016–2026）</h2>
+        <p class="sub">每年事件数（按区域堆叠）与当年最大冰雹直径；标注为数据库口径的年际变化。</p>
+      </div>
+    </header>
+    <div class="grid-2">
+      <div class="card" id="yearStack"></div>
+      <div class="card" id="yearSize"></div>
+    </div>
+    <div class="card" id="dbSeries"></div>
+  </section>
+
+  <!-- ============ 事件库 ============ -->
+  <section class="section" id="events">
+    <header class="section-head">
+      <div>
+        <h2>事件库（可检索）</h2>
+        <p class="sub">按年份、国家、直径、伤亡筛选；点击任意一行查看完整档案与原始出处。</p>
+      </div>
+      <div class="toolbar">
+        <input type="search" id="eventSearch" placeholder="搜索国家 / 地区 / 关键词…">
+        <select id="eventSort">
+          <option value="date-desc">最新在前</option>
+          <option value="date-asc">最早在前</option>
+          <option value="size-desc">冰雹直径</option>
+          <option value="loss-desc">经济损失</option>
+          <option value="cas-desc">伤亡人数</option>
+        </select>
+      </div>
+    </header>
+    <div class="card">
+      <div class="table-scroll tall" id="eventTable"></div>
+      <div class="table-foot" id="eventFoot"></div>
+    </div>
+  </section>
+
+  <!-- ============ 科学认知 ============ -->
+  <section class="section" id="science">
+    <header class="section-head">
+      <div>
+        <h2>科学认知：冰雹正在怎样变化？</h2>
+        <p class="sub">以下结论均来自同行评审文献与官方数据库报告，可展开查看出处。</p>
+      </div>
+    </header>
+    <div class="card-grid" id="scienceGrid"></div>
+    <div class="card record-card">
+      <div class="card-head"><h3>历史极值对照（超出十年窗，用于尺度参照）</h3></div>
+      <div class="table-scroll" id="recordTable"></div>
+    </div>
+  </section>
+
+  <!-- ============ 数据与方法 ============ -->
+  <section class="section" id="method">
+    <header class="section-head">
+      <div>
+        <h2>数据来源、口径与局限</h2>
+        <p class="sub">本图谱为多源资料汇编，不同国家统计口径差异显著，请勿直接横向等同于“真实风险”。</p>
+      </div>
+    </header>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head"><h3>核心数据源</h3></div>
+        <ol class="source-list" id="sourceList"></ol>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>方法与计算口径</h3></div>
+        <div class="method-body" id="methodBody"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>已知局限与偏差</h3></div>
+      <div class="limit-grid" id="limitGrid"></div>
+    </div>
+  </section>
+
+  <footer class="site-foot">
+    <p>全球冰雹灾害图谱 · 数据截至 2026 年 9 月，仅供研究与科普参考，不构成保险或工程决策依据。</p>
+    <p class="muted">Built as a single-page interactive atlas · 地图底图 Natural Earth (world-atlas) · 可视化 D3.js</p>
+  </footer>
+</main>
+
+<!-- 事件详情弹窗 -->
+<div class="modal-mask" id="modalMask" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="关闭">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script src="vendor/d3.min.js"></script>
+<script src="vendor/topojson-client.min.js"></script>
+<script src="data/meta.js"></script>
+<script src="data/events-asia.js"></script>
+<script src="data/events-europe.js"></script>
+<script src="data/events-americas.js"></script>
+<script src="data/events-africa-oceania.js"></script>
+<script src="data/country-stats.js"></script>
+<script src="js/util.js"></script>
+<script src="js/store.js"></script>
+<script src="js/map.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/tables.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
