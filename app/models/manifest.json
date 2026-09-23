@@ -89,7 +89,26 @@
    "sha256_8": "996358fa",
    "size_mb": 10.97,
    "ort_cpu_ms": 29.1
+  },
+  {
+   "id": "dav2-small-int8",
+   "file": "depth-anything-v2-small-int8.onnx",
+   "arch": "depth-anything-v2-small-int8",
+   "task": "depth",
+   "sizes": [
+    518,
+    308
+   ],
+   "input_name": "pixel_values",
+   "input": "1x3xHxW fp32 (H,W为14的倍数)",
+   "output_name": "predicted_depth",
+   "output": "1xHxW 相对深度(值越小越近)",
+   "dynamic_input": true,
+   "sha256_8": "01aa7a23",
+   "size_mb": 27.26,
+   "source": "github.com/rydersd/ill-tool (DAV2官方权重INT8量化)",
+   "license": "Apache-2.0 (Depth-Anything-V2)"
   }
  ],
- "updated": "2026-09-23 03:59:04"
+ "updated": "2026-09-23 04:41:40"
 }
