@@ -4,6 +4,24 @@
 (function () {
   "use strict";
 
+  // 全局错误捕获，避免空白页
+  window.addEventListener("error", function (ev) {
+    console.error("[GlobalError]", ev.message, ev.filename, ev.lineno, ev.error);
+    var note = document.getElementById("rangeNote");
+    if (note) note.innerHTML = '<b style="color:#dc2626">运行时错误：</b>' + (ev.message || "未知") + ' <span class="muted">请按 F12 查看控制台，尝试硬刷新（Ctrl+Shift+R）</span>';
+  });
+  window.addEventListener("unhandledrejection", function (ev) {
+    console.error("[UnhandledRejection]", ev.reason);
+  });
+
+  // 检测 file:// 协议，提示用户
+  if (location.protocol === "file:") {
+    document.addEventListener("DOMContentLoaded", function () {
+      var note = document.getElementById("rangeNote");
+      if (note) note.innerHTML = '<b style="color:#dc2626">请通过 HTTP 服务器访问</b>：当前为 file:// 协议，地图与数据加载会被浏览器阻止。请运行 <code>npm run serve</code> 后访问 http://127.0.0.1:8000/';
+    });
+  }
+
   var S = window.Store;
   var META = S.META;
   var selectedIso = null;
@@ -67,11 +85,12 @@
 
   /* ---------------- 主渲染 ---------------- */
   function render() {
-    var state = S.state;
-    var ev = S.filtered();
-    var countries = S.countries();
-    var byIso = {};
-    countries.forEach(function (c) { byIso[c.iso2] = c; });
+    try {
+      var state = S.state;
+      var ev = S.filtered();
+      var countries = S.countries();
+      var byIso = {};
+      countries.forEach(function (c) { byIso[c.iso2] = c; });
 
     /* KPI 与全球速览 */
     Tables.renderKpis("#kpiGrid", S.kpis(), state);
@@ -166,6 +185,11 @@
     var hint = document.getElementById("tableHint");
     if (hint) hint.textContent = tableCountries.length + " 个国家/地区（" + countries.length +
       " 个有事件 · " + (tableCountries.length - countries.length) + " 个仅备注）· 点击表头排序";
+    } catch (err) {
+      console.error("[render] 失败", err);
+      var noteEl = document.getElementById("rangeNote");
+      if (noteEl) noteEl.innerHTML = '<b style="color:#dc2626">渲染失败：</b>' + (err.message || err) + ' <span class="muted">请尝试重置筛选或硬刷新</span>';
+    }
   }
 
   /* ---------------- 交互动作 ---------------- */
