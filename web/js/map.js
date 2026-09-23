@@ -1,21 +1,26 @@
 /* =========================================================
-   map.js — 世界中纬度地图：国家色阶 + 事件气泡 + 提示框
-   依赖 vendor/d3.min.js, vendor/topojson-client.min.js, vendor/countries-110m.json
+   map.js — 世界地图 50m 精度 + 省州级边框
+   - 底图优先 50m，失败回退 110m
+   - 叠加：美国州界 (us-atlas 10m)、中国省界 (cn-atlas)、澳大利亚州界
+   - 依赖 vendor/d3.min.js, vendor/topojson-client.min.js
    ========================================================= */
 window.MapView = (function () {
   "use strict";
 
-  var svg, gRoot, gCountries, gBubbles, projection, pathGen, zoomBeh;
-  var features = [], container, tooltip, legendEl, noteEl;
+  var svg, gRoot, gLand, gCountries, gUS, gCN, gAU, gBubbles;
+  var projection, pathGen, zoomBeh;
+  var features = [], usFeatures = [], cnFeatures = [], auFeatures = [];
+  var landFeature = null;
+  var container, tooltip, legendEl, noteEl;
   var onSelect = function () { };
   var ready = false, failed = false;
   var lastData = null;
   var W = 0, H = 0;
+  var isHighRes = false;
 
   var NO_DATA = "#f1f5f9";
   var HAS_NO_EVENT = "#e2e8f0";
-  var NOTE_ONLY = "#ece7fb";   /* 仅有风险备注、在窗口内无收录事件 */
-  /* 风险等级专用色阶（绿 → 红），与数量型指标的对数蓝阶区分 */
+  var NOTE_ONLY = "#ece7fb";
   var RISK_STEPS = [
     { v: 1, label: "低", color: "#bbf7d0" },
     { v: 2, label: "低—中", color: "#d9f99d" },
@@ -43,11 +48,15 @@ window.MapView = (function () {
     onSelect = (opts && opts.onSelect) || onSelect;
 
     gRoot = svg.append("g");
+    gLand = gRoot.append("g").attr("class", "layer-land");
     gCountries = gRoot.append("g").attr("class", "layer-countries");
+    gUS = gRoot.append("g").attr("class", "layer-us-states");
+    gCN = gRoot.append("g").attr("class", "layer-cn-provinces");
+    gAU = gRoot.append("g").attr("class", "layer-au-states");
     gBubbles = gRoot.append("g").attr("class", "layer-bubbles");
 
     zoomBeh = d3.zoom()
-      .scaleExtent([1, 9])
+      .scaleExtent([1, 12])
       .filter(function (ev) { return ev.type !== "wheel"; })
       .on("zoom", function (ev) { gRoot.attr("transform", ev.transform); });
 
@@ -59,18 +68,84 @@ window.MapView = (function () {
 
   function load() {
     if (typeof d3 === "undefined" || typeof topojson === "undefined") { offline("可视化库未加载"); return; }
-    d3.json("./vendor/countries-110m.json").then(function (topo) {
-      var fc = topojson.feature(topo, topo.objects.countries);
+
+    var pCountries50 = d3.json("./vendor/countries-50m.json").then(function (topo) {
+      return { topo: topo, res: "50m" };
+    }).catch(function () {
+      return d3.json("./vendor/countries-110m.json").then(function (topo) {
+        return { topo: topo, res: "110m" };
+      });
+    });
+
+    var pLand50 = d3.json("./vendor/land-50m.json").catch(function () {
+      return d3.json("./vendor/land-110m.json").catch(function () { return null; });
+    });
+
+    var pUS = d3.json("./vendor/us-states-10m.json").catch(function () { return null; });
+    var pCN = d3.json("./vendor/china-atlas.json").catch(function () { return null; });
+    var pAU = d3.json("./vendor/australia-states.json").catch(function () { return null; });
+
+    Promise.all([pCountries50, pLand50, pUS, pCN, pAU]).then(function (vals) {
+      var cRes = vals[0];
+      var landTopo = vals[1];
+      var usTopo = vals[2];
+      var cnTopo = vals[3];
+      var auGeo = vals[4];
+
+      if (!cRes || !cRes.topo) throw new Error("countries topo missing");
+
+      isHighRes = cRes.res === "50m";
+      var fc = topojson.feature(cRes.topo, cRes.topo.objects.countries);
       features = fc.features.map(function (f) {
         f.__iso = U.isoFromNum(f.id) || U.isoFromName(f.properties && f.properties.name) || null;
         return f;
       });
+
+      if (landTopo) {
+        try {
+          var landObj = landTopo.objects.land || landTopo.objects.countries || null;
+          if (landObj) {
+            var landFc = topojson.feature(landTopo, landObj);
+            // landFc may be FeatureCollection or Feature
+            if (landFc.type === "FeatureCollection") landFeature = landFc.features;
+            else landFeature = [landFc];
+          }
+        } catch (e) { /* ignore */ }
+      }
+
+      if (usTopo) {
+        try {
+          var usFc = topojson.feature(usTopo, usTopo.objects.states);
+          usFeatures = usFc.features || [];
+        } catch (e) { usFeatures = []; }
+      }
+
+      if (cnTopo) {
+        try {
+          // cn-atlas.json has objects.provinces
+          var provObj = cnTopo.objects.provinces || cnTopo.objects.provinces;
+          var cnFc = topojson.feature(cnTopo, provObj);
+          cnFeatures = cnFc.features || [];
+        } catch (e) {
+          console.warn("china atlas parse fail", e);
+          cnFeatures = [];
+        }
+      }
+
+      if (auGeo) {
+        try {
+          if (auGeo.type === "FeatureCollection") auFeatures = auGeo.features || [];
+          else if (auGeo.type === "Feature") auFeatures = [auGeo];
+          else auFeatures = [];
+        } catch (e) { auFeatures = []; }
+      }
+
       ready = true;
       resize();
       if (lastData) draw(lastData);
     }).catch(function (err) {
       console.warn("地图数据加载失败", err);
-      offline("地图底图（vendor/countries-110m.json）加载失败，请确认文件存在并以 http 方式访问。");
+      offline("地图底图加载失败（需 http 访问，50m/110m 均不可用）。");
     });
   }
 
@@ -100,17 +175,84 @@ window.MapView = (function () {
       .attr("class", "graticule").attr("d", pathGen)
       .attr("fill", "none").attr("stroke", "#eef4fb").attr("stroke-width", 0.7);
 
-    gCountries.selectAll("path").data(features, function (f) {
+    if (landFeature && landFeature.length) {
+      gLand.selectAll("path.land").data(landFeature).join("path")
+        .attr("class", "land")
+        .attr("d", pathGen)
+        .attr("fill", "#eef5ff")
+        .attr("stroke", "none");
+    }
+
+    gCountries.selectAll("path.country").data(features, function (f) {
       return f.__iso || ("n:" + (f.properties ? f.properties.name : "?"));
     })
       .join("path")
       .attr("d", pathGen)
       .attr("class", "country")
       .attr("data-iso", function (f) { return f.__iso; })
-      .attr("stroke", "#ffffff").attr("stroke-width", 0.6)
+      .attr("stroke", "#ffffff").attr("stroke-width", isHighRes ? 0.5 : 0.6)
       .on("click", function (ev, f) { if (f.__iso) onSelect(f.__iso); })
       .on("mousemove", function (ev, f) { countryTip(ev, f); })
       .on("mouseleave", hideTip);
+
+    // US states overlay
+    if (usFeatures.length) {
+      gUS.selectAll("path.us-state").data(usFeatures).join("path")
+        .attr("class", "us-state")
+        .attr("d", pathGen)
+        .attr("fill", "none")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 0.6)
+        .attr("stroke-opacity", 0.9)
+        .style("pointer-events", "none");
+      // inner borders with slightly darker
+      gUS.selectAll("path.us-state-inner").data(usFeatures).join("path")
+        .attr("class", "us-state-inner")
+        .attr("d", pathGen)
+        .attr("fill", "none")
+        .attr("stroke", "#cbd5e1")
+        .attr("stroke-width", 0.35)
+        .attr("stroke-opacity", 0.8)
+        .style("pointer-events", "none");
+    }
+
+    if (cnFeatures.length) {
+      gCN.selectAll("path.cn-prov").data(cnFeatures).join("path")
+        .attr("class", "cn-prov")
+        .attr("d", pathGen)
+        .attr("fill", "none")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 0.55)
+        .attr("stroke-opacity", 0.95)
+        .style("pointer-events", "none");
+      gCN.selectAll("path.cn-prov-inner").data(cnFeatures).join("path")
+        .attr("class", "cn-prov-inner")
+        .attr("d", pathGen)
+        .attr("fill", "none")
+        .attr("stroke", "#cbd5e1")
+        .attr("stroke-width", 0.32)
+        .attr("stroke-opacity", 0.75)
+        .style("pointer-events", "none");
+    }
+
+    if (auFeatures.length) {
+      gAU.selectAll("path.au-state").data(auFeatures).join("path")
+        .attr("class", "au-state")
+        .attr("d", pathGen)
+        .attr("fill", "none")
+        .attr("stroke", "#ffffff")
+        .attr("stroke-width", 0.6)
+        .attr("stroke-opacity", 0.9)
+        .style("pointer-events", "none");
+      gAU.selectAll("path.au-state-inner").data(auFeatures).join("path")
+        .attr("class", "au-state-inner")
+        .attr("d", pathGen)
+        .attr("fill", "none")
+        .attr("stroke", "#cbd5e1")
+        .attr("stroke-width", 0.35)
+        .attr("stroke-opacity", 0.8)
+        .style("pointer-events", "none");
+    }
 
     if (lastData) draw(lastData);
   }
@@ -186,7 +328,7 @@ window.MapView = (function () {
         return U.seqColor(v, max) || NO_DATA;
       })
       .attr("stroke", function (f) { return f.__iso === data.selected ? "#0f172a" : "#ffffff"; })
-      .attr("stroke-width", function (f) { return f.__iso === data.selected ? 1.6 : 0.6; })
+      .attr("stroke-width", function (f) { return f.__iso === data.selected ? 1.6 : (isHighRes ? 0.5 : 0.6); })
       .classed("selected", function (f) { return f.__iso === data.selected; });
 
     /* 事件气泡 */
@@ -238,6 +380,7 @@ window.MapView = (function () {
       if (data.showBubbles) {
         riskLegend += '<div class="dot-key"><span class="muted">圆点大小＝最大冰雹直径，颜色＝事件年份</span></div>';
       }
+      riskLegend += '<div class="dot-key"><span class="muted">50m 精度底图 + 美/中/澳 省州界（白线描边）</span></div>';
       if (legendEl) legendEl.innerHTML = riskLegend;
       updateNote(data, true);
       return;
@@ -268,6 +411,7 @@ window.MapView = (function () {
       }
       legendHtml += '</div><div class="ramp-labels"><span>' + y0 + ' 年</span><span>' + y1 + ' 年（圆点颜色）</span></div>';
     }
+    legendHtml += '<div class="dot-key"><span class="muted">' + (isHighRes ? '50m 精度底图' : '110m 底图') + ' + 美/中/澳 省州界（白线）</span></div>';
     if (legendEl) legendEl.innerHTML = legendHtml;
 
     updateNote(data, false);
@@ -281,12 +425,14 @@ window.MapView = (function () {
       (data.regionLabel || "全部区域") + ' · ' + (data.filterLabel || "全部事件") + ' ｜ ';
     if (isRisk) {
       body += '地图按风险等级着色（覆盖 ' + (Object.keys(data.colorByIso || {}).length) + ' 个国家/地区，含 ' +
-        noteCount + ' 个仅有风险备注、无收录事件者）；' + ev + ' 个事件气泡。';
+        noteCount + ' 个仅有风险备注、无收录事件者）；' + ev + ' 个事件气泡。' +
+        (isHighRes ? '底图 50m 精度。' : '底图 110m 精度。');
     } else {
       body += '地图上 ' + ev + ' 个事件气泡，' +
         Object.keys(data.byIso).length + ' 个国家/地区有收录事件' +
         (data.showNotes && noteCount ? '、' + noteCount + ' 个仅有风险备注' : '') +
-        '（颜色最深 = ' + U.esc(data.metricLabel) + ' 最高）。';
+        '（颜色最深 = ' + U.esc(data.metricLabel) + ' 最高）。' +
+        (isHighRes ? '底图已升级至 50m。' : '');
     }
     noteEl.innerHTML = body;
   }
@@ -295,6 +441,7 @@ window.MapView = (function () {
     init: init,
     draw: draw,
     isReady: function () { return ready; },
-    failed: function () { return failed; }
+    failed: function () { return failed; },
+    isHighRes: function () { return isHighRes; }
   };
 })();

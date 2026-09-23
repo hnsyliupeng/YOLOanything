@@ -116,6 +116,24 @@ window.HAIL_META = {
       use: "4,350 万处房产暴露、2025 年 142 个 ≥2 英寸冰雹日、2023 年德州冰雹 70–100 亿美元"
     },
     {
+      name: "The Watchers / FOX Weather / Deccan Herald 等灾害快讯",
+      scope: "全球实时雹暴快讯（时间、地点、伤亡、房屋受损数、停电规模）",
+      url: "https://watchers.news/",
+      use: "巴西 Erechim 2025-11-23、Florianópolis 2026-08-30、Rio Grande do Sul 2024-12-01、印度 Odisha/Mizoram/Manipur/Bihar 2024–2025、美国德州 2026-03-10 与 05-10 等 12 起新增事件"
+    },
+    {
+      name: "Cotality 2026 Hazard HQ 与 2026 SCS 风险报告",
+      scope: "美国冰雹暴露与 2026 年早春德州雹暴（>3.5 英寸）案例",
+      url: "https://www.cotality.com/hazard-hq/march-2026-texas-hail-michigan-tornado",
+      use: "us-2026-0310-texas 与德州 800 万房产暴露、3.1 万亿美元重建价值"
+    },
+    {
+      name: "CIMSS Satellite Blog / GOES-16 GLM",
+      scope: "卫星与闪电数据复盘阿根廷巨型冰雹",
+      url: "https://cimss.ssec.wisc.edu/satellite-blog/archives/57664",
+      use: "ar-2024-0312-campana 巨型冰雹卫星复盘"
+    },
+    {
       name: "Wikipedia《List of costly or deadly hailstorms》与各国官方通报",
       scope: "历史与近期昂贵/致命雹暴的汇总条目（含来源链接）",
       url: "https://en.wikipedia.org/wiki/List_of_costly_or_deadly_hailstorms",
@@ -199,11 +217,12 @@ window.HAIL_META = {
       ]
     },
     {
-      h: "4. 地图渲染",
+      h: "4. 地图渲染（2026-09 第三轮升级）",
       items: [
-        "底图为 Natural Earth 1:1.1 亿国家边界（world-atlas / TopoJSON），通过 ISO 3166-1 数字码与国家名双重匹配。",
-        "色阶使用对数分箱，避免美国、日本等报告高密度国家压倒其余色阶；0 值与无数据国家以浅灰区分。",
-        "事件气泡位置为报告的受灾中心点（城市或区域中心），大小映射最大冰雹直径，颜色映射年份。"
+        "底图优先使用 Natural Earth 1:5000 万国家边界（world-atlas 50m / TopoJSON，177 国），失败回退至 110m；通过 ISO 3166-1 数字码与国家名双重匹配。",
+        "叠加省州级边框：美国州界（us-atlas 10m）、中国省界（cn-atlas，34 个省级行政区）、澳大利亚州界（world-geojson 合并），以白线描边 + 浅灰内线区分，指针事件关闭以避免遮挡国家点击。",
+        "色阶使用对数分箱，避免美国、日本等报告高密度国家压倒其余色阶；0 值与无数据国家以浅灰区分；风险等级使用绿→红专用色阶。",
+        "事件气泡位置为报告的受灾中心点（城市或区域中心），大小映射最大冰雹直径，颜色映射年份；支持缩放（滚轮过滤，拖拽平移）。"
       ]
     }
   ],

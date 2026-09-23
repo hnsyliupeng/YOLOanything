@@ -16,7 +16,8 @@ window.Store = (function () {
     window.HAIL_EVENTS_EUROPE || [],
     window.HAIL_EVENTS_AMERICAS || [],
     window.HAIL_EVENTS_AFRICA_OCEANIA || [],
-    window.HAIL_EVENTS_EXTRA || []
+    window.HAIL_EVENTS_EXTRA || [],
+    window.HAIL_EVENTS_PLUS || []
   );
 
   var EVENTS = RAW.map(function (e) {
@@ -56,7 +57,8 @@ window.Store = (function () {
   var NOTES = {};
   ["HAIL_COUNTRY_NOTES_ASIA", "HAIL_COUNTRY_NOTES_EUROPE",
     "HAIL_COUNTRY_NOTES_AMERICAS", "HAIL_COUNTRY_NOTES_AFRICA_OCEANIA",
-    "HAIL_COUNTRY_STATS", "HAIL_COUNTRY_NOTES_EXTRA"].forEach(function (k) {
+    "HAIL_COUNTRY_STATS", "HAIL_COUNTRY_NOTES_EXTRA",
+    "HAIL_COUNTRY_NOTES_PLUS"].forEach(function (k) {
       var o = window[k];
       if (o) Object.keys(o).forEach(function (iso) { NOTES[iso] = o[iso]; });
     });
