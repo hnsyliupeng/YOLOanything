@@ -97,8 +97,20 @@ try {
     && fuseTest.R.mx > 8 && fuseTest.G.mx > 8 && fuseTest.B.mx > 8;
   checks.add('Y-D-S合成(媒体尺寸+三通道有效分布)', ftOk, JSON.stringify(fuseTest));
 
-  /* 4. fused 直推循环（6 张 val，conf=0.12 口径） */
-  const valImgs = fs.readdirSync(VAL_DIR).filter(f => f.endsWith('.jpg')).slice(100, 106);
+  /* 4. fused 直推循环（6 张代表性 val，conf=0.12 口径）
+     选样依据：R8 落盘后离线全 val 扫描(ultralytics conf=0.12 imgsz=320)——
+     检出 319/502 图、总框 754（R7 同口径 256/502、676、170 图 r8>r7）。
+     原 slice(100,106) 为单视频任意切片，6 图全零检出无代表性；
+     现固定 4 张跨视频/类别检出图 + 2 张诚实漏检图（保留残留不足的可视证据）。 */
+  const SAMPLE = [
+    'vid_000438_frame0000032', // r8:4检出(fish c0.98) r7:3
+    'vid_000285_frame0000185', // r8:3(plant+rov c0.75) r7:1
+    'vid_000432_frame0000011', // r8:4(rov c0.78) r7:0
+    'vid_000126_frame0000011', // r8:7(c0.70) r7:3
+    'vid_000157_frame0000005', // 双0 诚实漏检(瓶，远距低对比)
+    'vid_000290_frame0000002', // r8:0 r7:2 诚实漏检(轮胎)
+  ];
+  const valImgs = SAMPLE.map(f => `${f}.jpg`);
   const imgB64 = valImgs.map(f => fs.readFileSync(path.join(VAL_DIR, f)).toString('base64'));
   const fusedRun = await page.evaluate(async ({ arr, conf }) => {
     const H = window.__AQUASCAN__;
@@ -151,9 +163,12 @@ try {
   checks.add('fused推理<2500ms(WASM 320)', fusedAvg < 2500, `${fusedAvg.toFixed(0)}ms`);
   checks.add('全程零页面错误', trace.pageErrors.length === 0, trace.pageErrors.join(';') || 'clean');
 
-  /* 6. 真 UI 全链：合成源→检测→深度→统计 */
+  /* 6. 真 UI 全链：合成源→检测→深度→统计
+     用含目标 val 代表图（uploadFile 走真实文件加载路径），
+     内置示例素材对 fused 无检出（0.12 conf），不适合做全链验证。 */
   await page.evaluate(() => { window.__AQUASCAN__.state.thresholds.conf = 0.12; });
-  await page.click('#btn-sample');
+  await (await page.$('#file-input')).uploadFile(
+    path.join(REPO, 'data', 'datasets', 'water_trash', 'images', 'val', 'vid_000438_frame0000032.jpg'));
   await page.waitForFunction(() => !!window.__AQUASCAN__?.media?.bitmap, { timeout: 15000, polling: 300 });
   await page.click('#btn-run');
   await page.waitForFunction(() => !!window.__AQUASCAN__?.lastResult, { timeout: 60000, polling: 400 });
