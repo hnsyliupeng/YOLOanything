@@ -75,14 +75,21 @@ def build_model():
     return DepthLite()
 
 
-def load_data(split, limit=None):
+def list_data(split, limit=None):
+    """只列文件路径（惰性加载：沙箱仅3GB内存，全量预载3GB+必OOM）"""
     d = REPO / "data" / "datasets" / "syn_depth" / split
     imgs = sorted(d.glob("*.jpg"))
     if limit:
         imgs = imgs[:limit]
-    X = np.zeros((len(imgs), 3, 256, 256), np.float32)
-    Y = np.zeros((len(imgs), 256, 256), np.float32)
-    for i, p in enumerate(imgs):
+    return imgs
+
+
+def load_batch(paths):
+    """按需读取一个 batch（jpg+npy → NCHW float32）"""
+    n = len(paths)
+    X = np.zeros((n, 3, 256, 256), np.float32)
+    Y = np.zeros((n, 256, 256), np.float32)
+    for i, p in enumerate(paths):
         im = cv2.resize(cv2.imread(str(p)), (256, 256))
         dep = cv2.resize(np.load(p.with_suffix(".npy")).astype(np.float32), (256, 256))
         X[i] = cv2.dnn.blobFromImage(im, 1 / 255.0, swapRB=True)
@@ -111,9 +118,9 @@ def main():
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, args.epochs)
     lossfn = nn.L1Loss()
 
-    Xtr, Ytr = load_data("train", args.limit)
-    Xva, Yva = load_data("val")
-    print(f"[depth] train={len(Xtr)} val={len(Xva)}")
+    Xtr = list_data("train", args.limit)
+    Xva = list_data("val")
+    print(f"[depth] train={len(Xtr)} val={len(Xva)} (惰性加载)")
 
     hist = []
     best = 1e9
@@ -123,8 +130,9 @@ def main():
         tot = 0
         for i in range(0, len(Xtr), args.batch):
             idx = perm[i:i + args.batch]
-            xb = torch.from_numpy(Xtr[idx])
-            yb = torch.from_numpy(Ytr[idx])[:, None]
+            xb_np, yb_np = load_batch([Xtr[j] for j in idx])
+            xb = torch.from_numpy(xb_np)
+            yb = torch.from_numpy(yb_np)[:, None]
             loss = lossfn(model(xb), yb)
             opt.zero_grad()
             loss.backward()
@@ -135,8 +143,9 @@ def main():
         with torch.no_grad():
             va = 0
             for i in range(0, len(Xva), args.batch):
-                vb = torch.from_numpy(Xva[i:i + args.batch])
-                yb = torch.from_numpy(Yva[i:i + args.batch])[:, None]
+                vb_np, yv_np = load_batch(Xva[i:i + args.batch])
+                vb = torch.from_numpy(vb_np)
+                yb = torch.from_numpy(yv_np)[:, None]
                 va += float(lossfn(model(vb), yb)) * len(vb)
             va /= len(Xva)
         hist.append(dict(epoch=ep + 1, train=tot / len(Xtr), val=va))
@@ -159,12 +168,13 @@ def main():
                       dynamic_axes={"images": {0: "batch"}, "depth": {0: "batch"}})
     import onnxruntime as ort
     sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
-    o = sess.run(None, {sess.get_inputs()[0].name: Xva[:1]})[0]
+    probe, _ = load_batch(Xva[:1])
+    o = sess.run(None, {sess.get_inputs()[0].name: probe})[0]
     print(f"[depth] ONNX导出 {onnx_path.name}, 输出 {o.shape}, 耗时基准:")
     ts = []
     for _ in range(6):
         t = time.time()
-        sess.run(None, {sess.get_inputs()[0].name: Xva[:1]})
+        sess.run(None, {sess.get_inputs()[0].name: probe})
         ts.append((time.time() - t) * 1000)
     print(f"  ORT-CPU: {np.mean(ts[1:]):.0f}ms")
 
