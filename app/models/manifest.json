@@ -135,10 +135,10 @@
    "params_m": 1.11,
    "trained_on": "合成水上场景(解析深度), 沙箱自训练",
    "official_dav2_hf": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.onnx",
-   "sha256_8": "93606f62",
+   "sha256_8": "56438e16",
    "size_mb": 0.35,
    "ort_cpu_ms": 11.7
   }
  ],
- "updated": "2026-09-24 04:32:24"
+ "updated": "2026-09-24 06:17:17"
 }
