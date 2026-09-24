@@ -1,0 +1,72 @@
+{
+  "subtask": 3,
+  "round": "4",
+  "model": "yolo26n-water-320",
+  "conf": 0.05,
+  "startedAt": "2026-09-24T04:33:08.206Z",
+  "inference": [
+    {
+      "img": "vid_000132_frame0000018.jpg",
+      "n": 7,
+      "trash": 4,
+      "ms": 1587.5,
+      "infer": 1566.3
+    },
+    {
+      "img": "vid_000132_frame0000019.jpg",
+      "n": 5,
+      "trash": 3,
+      "ms": 690.9,
+      "infer": 683
+    },
+    {
+      "img": "vid_000132_frame0000052.jpg",
+      "n": 3,
+      "trash": 0,
+      "ms": 659.7,
+      "infer": 646.2
+    },
+    {
+      "img": "vid_000132_frame0000088.jpg",
+      "n": 11,
+      "trash": 9,
+      "ms": 663.1,
+      "infer": 645.1
+    },
+    {
+      "img": "vid_000132_frame0000105.jpg",
+      "n": 2,
+      "trash": 0,
+      "ms": 664.3,
+      "infer": 657.1
+    },
+    {
+      "img": "vid_000132_frame0000124.jpg",
+      "n": 4,
+      "trash": 1,
+      "ms": 648,
+      "infer": 632.8
+    }
+  ],
+  "uiChain": {
+    "dets": 5,
+    "hasDepthRes": true,
+    "overlayAlphaPx": 38451,
+    "overlaySize": [
+      480,
+      360
+    ],
+    "mediaCanvas": true,
+    "statCount": "5",
+    "statClasses": "1",
+    "classRows": 1,
+    "chipRes": "分辨率 480×360",
+    "chipInfer": "推理 639.4 ms"
+  },
+  "summary": {
+    "total": 16,
+    "pass": 16,
+    "fail": 0
+  },
+  "finishedAt": "2026-09-24T04:33:32.356Z"
+}

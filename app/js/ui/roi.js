@@ -151,6 +151,8 @@ export function initROI() {
 
   // 画布尺寸变化时保持 ROI 对位
   new ResizeObserver(() => syncSize()).observe(stack);
+  // 任何来源的 ROI 变更（含程序化设置）都重画选区
+  bus.on('roi:change', () => syncSize());
   // 新图像/清空时：ROI 选区保留，但几何重对位
   bus.on('media:loaded', () => syncSize());
   bus.on('media:clear', () => { drag = null; syncSize(); });
