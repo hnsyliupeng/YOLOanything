@@ -31,6 +31,9 @@ def main():
     ap.add_argument("--weights", default="training/runs/r3/weights/best.pt")
     ap.add_argument("--out", default="app/models")
     ap.add_argument("--sizes", default="640,320")
+    ap.add_argument("--prefix", default="yolo26n-seg", help="输出文件名前缀")
+    ap.add_argument("--id-prefix", default="yolo26n-water", help="manifest id 前缀")
+    ap.add_argument("--tag", default=None, help="模型标签（如 fused 多模态；写入 manifest 并参与 regen 判定）")
     args = ap.parse_args()
 
     from ultralytics import YOLO
@@ -49,7 +52,7 @@ def main():
             old_models = json.loads(man_p.read_text()).get("models", [])
         except Exception as e:
             print(f"!! 旧 manifest 解析失败，按全新处理: {e}")
-    regen_ids = {f"yolo26n-water-{s}" for s in [int(s) for s in args.sizes.split(",")]}
+    regen_ids = {f"{args.id_prefix}-{s}" for s in [int(s) for s in args.sizes.split(",")]}
     manifest = dict(models=[m for m in old_models if m.get("id") not in regen_ids])
     # official_dav2_hf 条目（轨B：用户浏览器直连 HF，沙箱内不可下载）
     if not any(m.get("id") == "official_dav2_hf" for m in manifest["models"]):
@@ -64,7 +67,7 @@ def main():
         onnx_path = model.export(format="onnx", imgsz=sz, opset=13, simplify=True,
                                  dynamic=False, half=False, nms=False, batch=1)
         onnx_path = Path(onnx_path)
-        target = out_dir / f"yolo26n-seg-{sz}.onnx"
+        target = out_dir / f"{args.prefix}-{sz}.onnx"
         shutil.copy2(onnx_path, target)
 
         # ── onnxruntime 验证 + 速度 ──
@@ -82,15 +85,21 @@ def main():
         det = outs[0]
         print(f"  输出: {shapes}, 检测张量范围 conf∈[{det[..., 4].min():.2f},{det[..., 4].max():.2f}]")
         print(f"  ORT-CPU 推理: {np.mean(times):.0f}ms (±{np.std(times):.0f})")
-        manifest["models"].append(dict(
-            id=f"yolo26n-water-{sz}", file=target.name, arch="yolo26n-seg",
+        entry = dict(
+            id=f"{args.id_prefix}-{sz}", file=target.name, arch="yolo26n-seg",
             task="segment", imgsz=sz, outputs=shapes,
-            input="1x3x{sz}x{sz} NCHW RGB 0-1".format(sz=sz),
+            input=f"1x3x{sz}x{sz} NCHW RGB 0-1",
             end2end_nms_free=True, max_det=300,
             classes=len(names), class_names=list(names.values()),
             sha256_8=sha256(target), size_mb=round(target.stat().st_size / 1e6, 2),
             ort_cpu_ms=round(float(np.mean(times)), 1),
-        ))
+        )
+        if args.tag:
+            entry["tag"] = args.tag
+        if args.tag == "fused":
+            entry["preprocess"] = "yds"          # ch0=Y亮度 ch1=深度(CLAHE) ch2=S饱和度
+            entry["input"] = f"1x3x{sz}x{sz} NCHW Y-D-S 融合通道 0-1（需 depthSession 先估计）"
+        manifest["models"].append(entry)
 
     manifest["updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
     (out_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1))

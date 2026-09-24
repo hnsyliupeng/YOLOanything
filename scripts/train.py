@@ -35,12 +35,14 @@ def main():
     ap.add_argument("--device", default="cpu")
     ap.add_argument("--optimizer", default="auto")
     ap.add_argument("--cache", default=False)
+    ap.add_argument("--data", default=None, help="dataset.yaml 路径（默认 water_trash）")
     args = ap.parse_args()
 
     import torch
     torch.set_num_threads(2)
     from ultralytics import YOLO
 
+    data_yaml = Path(args.data) if args.data else DATA_YAML
     out_dir = RUNS / f"r{args.round}"
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
@@ -54,7 +56,7 @@ def main():
         else:
             model = YOLO("yolo26n-seg.yaml")  # 从零构建（沙箱无预训练权重下载渠道）
         results = model.train(
-            data=str(DATA_YAML),
+            data=str(data_yaml),
             epochs=args.epochs,
             imgsz=args.imgsz,
             batch=args.batch,
