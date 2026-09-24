@@ -69,7 +69,7 @@ python3 scripts/server.py --port 8000 --root app
 | `yolo26n-water-640` | 检测+分割 | YOLO26n-seg @640 水上垃圾 16 类 | 10.6MB | ~1.4-1.6s（R3 期 wasm CPU 实测） |
 | `yolo26n-water-320` | 检测+分割 | 同上 @320（快速档） | 10.5MB | ~0.8-0.9s（R6 期 wasm CPU 实测 805ms@空闲） |
 | `dav2-small-int8` | 深度 | **官方 Depth-Anything-V2-Small INT8 量化（27MB，已入库，默认）** | 27.26 | 视设备 |
-| `dav2-lite-256` | 深度 | 自训 DepthLite（ViT-tiny patch16/dim128/4层 1.11M，**真实ROV帧物理复合**（背景=真实帧+物理变体，目标=真实标注实例，标签0丢失），val L1 0.0293） | 0.35 | 33ms |
+| `dav2-lite-256` | 深度 | 自训 DepthLite（ViT-tiny patch16/dim128/4层 1.11M，**真实ROV帧物理复合**（背景=真实帧+物理变体，目标=真实标注实例，标签0丢失），val L1 0.0282，ONNX 自包含） | 4.79 | 10.3ms |
 | `official_dav2_hf` | 深度 | 官方 Depth-Anything-V2-Small ONNX（浏览器直连 HuggingFace） | ~99MB | 视设备 |
 
 > 官方 DAV2 权重最终经 GitHub 第三方仓库（rydersd/ill-tool）直取 INT8 量化版入库（sha256_8=01aa7a23，27.26MB）；
