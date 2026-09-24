@@ -1,0 +1,95 @@
+{
+  "subtask": "multimodal",
+  "round": "8r",
+  "model": "yolo26n-water-fused-320",
+  "depth": "dav2-lite-256",
+  "conf": 0.12,
+  "rgbCtrl": "yolo26n-water-320",
+  "startedAt": "2026-09-24T17:27:39.323Z",
+  "fusedInference": [
+    {
+      "n": 2,
+      "trash": 0,
+      "infer": 520.3
+    },
+    {
+      "n": 2,
+      "trash": 0,
+      "infer": 139.8
+    },
+    {
+      "n": 4,
+      "trash": 0,
+      "infer": 161.9
+    },
+    {
+      "n": 0,
+      "trash": 0,
+      "infer": 244.9
+    },
+    {
+      "n": 0,
+      "trash": 0,
+      "infer": 160.8
+    },
+    {
+      "n": 0,
+      "trash": 0,
+      "infer": 132.8
+    }
+  ],
+  "rgbControl": [
+    {
+      "n": 0,
+      "trash": 0,
+      "infer": 141.9,
+      "boosted": 0
+    },
+    {
+      "n": 2,
+      "trash": 0,
+      "infer": 143.6,
+      "boosted": 2
+    },
+    {
+      "n": 0,
+      "trash": 0,
+      "infer": 132.5,
+      "boosted": 0
+    },
+    {
+      "n": 6,
+      "trash": 3,
+      "infer": 135.2,
+      "boosted": 3
+    },
+    {
+      "n": 0,
+      "trash": 0,
+      "infer": 139.4,
+      "boosted": 0
+    },
+    {
+      "n": 0,
+      "trash": 0,
+      "infer": 176.6,
+      "boosted": 0
+    }
+  ],
+  "uiChain": {
+    "dets": 2,
+    "hasDepthRes": true,
+    "depthVals": 2,
+    "fusedPath": true,
+    "overlayAlphaPx": 10023,
+    "statCount": "2",
+    "statClasses": "1",
+    "chipInfer": "推理 153.6 ms"
+  },
+  "summary": {
+    "total": 20,
+    "pass": 20,
+    "fail": 0
+  },
+  "finishedAt": "2026-09-24T17:27:51.769Z"
+}
