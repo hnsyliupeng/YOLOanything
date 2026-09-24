@@ -1,0 +1,18 @@
+{
+  "subtask": 7,
+  "round": "1",
+  "startedAt": "2026-09-24T04:41:59.335Z",
+  "video": {
+    "kind": "video-frame",
+    "inferCount": 5,
+    "dets": 0,
+    "vidStatus": "test_water.webm 480×360 · 4s",
+    "videoBarVisible": true
+  },
+  "summary": {
+    "total": 5,
+    "pass": 5,
+    "fail": 0
+  },
+  "finishedAt": "2026-09-24T04:42:57.241Z"
+}

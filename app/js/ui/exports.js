@@ -25,10 +25,19 @@ const tsCompact = () => new Date().toISOString().replace(/[:.]/g, '-').slice(0, 
 export function addRecord(rec) {
   records.push(rec);
   if (records.length > 200) records.shift();
+  // 首条记录到达即启用导出按钮
+  document.getElementById('btn-export-json')?.removeAttribute('disabled');
+  document.getElementById('btn-export-csv')?.removeAttribute('disabled');
 }
 
 export function initExports() {
-  document.getElementById('btn-export-json').addEventListener('click', () => {
+  // 首条记录后启用按钮（未推理时保持禁用，避免导出空档）
+  const btnJson = document.getElementById('btn-export-json');
+  const btnCsv = document.getElementById('btn-export-csv');
+  const enable = () => { btnJson.disabled = false; btnCsv.disabled = false; };
+  if (records.length) enable();
+
+  btnJson.addEventListener('click', () => {
     if (!records.length) { toast('暂无记录：先运行一次推理', 'warn'); return; }
     const payload = {
       app: 'AquaScan 水上垃圾检测与深度理解系统',
