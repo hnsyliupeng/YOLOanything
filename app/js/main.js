@@ -306,6 +306,13 @@ async function boot() {
       dets.forEach(d => {
         d.depth = H.depthSession?.depthAt(depthRes, d.box) ?? null;
       });
+      // SMA3 关系增强（子任务5）
+      let graph = null, summary = null;
+      if (state.flags.relations && dets.length > 1) {
+        graph = buildRelationGraph(dets, result.srcW, result.srcH);
+        dets = sma3Enhance(dets, graph).filter(d => d.score >= state.thresholds.conf);
+        summary = graphSummary(graph);
+      }
       // ROI 区域过滤（子任务6）：仅保留中心落在 ROI 内的目标
       H.lastDetsAll = dets;               // ROI 重过滤的完整基线（过滤前）
       if (state.region) {
