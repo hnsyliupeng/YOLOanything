@@ -134,9 +134,9 @@ async function boot() {
       }
       if (cur && !items.some(m => m.id === cur)) sel.value = items[0]?.id ?? '';
     };
-    const detItems = manifest.models.filter(m => m.task === 'detect').map(m => ({
+    const detItems = manifest.models.filter(m => m.task === 'detect' || m.task === 'segment').map(m => ({
       id: m.id,
-      label: `${m.name || m.id}${m.preprocess === 'yds' ? ' ×Depth 融合' : ''}${String(m.input || '').includes('320') || m.input_size === 320 ? ' (320·快速)' : String(m.input || '').includes('640') || m.input_size === 640 ? ' (640)' : ''}`,
+      label: `YOLO26n 水上垃圾${m.preprocess === 'yds' ? ' ×Depth 融合' : ''}${m.imgsz ? ` (${m.imgsz}${m.imgsz === 320 ? '·快速' : ''})` : ''}`,
     }));
     const depItems = manifest.models.filter(m => m.task === 'depth').map(m => ({ id: m.id, label: m.name || m.id }));
     fill(document.getElementById('sel-detect-model'), detItems, state.models.detect);
