@@ -71,7 +71,7 @@ python3 scripts/server.py --port 8000 --root app
 | `yolo26n-water-fused-320` | 检测+分割 | **YOLO26n-seg × Depth 融合 @320（Y-D-S 三通道，R8 权重，box mAP50 0.1322=28×R6）** | 11.0MB | ~0.13-0.36s（round8 wasm 实测） |
 | `yolo26n-water-fused-640` | 检测+分割 | 同上 @640 | 11.1MB | 视设备 |
 | `dav2-small-int8` | 深度 | **官方 Depth-Anything-V2-Small INT8 量化（27MB，已入库，默认）** | 27.26 | 视设备 |
-| `dav2-lite-256` | 深度 | 自训 DepthLite（ViT-tiny patch16/dim128/4层 1.11M，**真实ROV帧物理复合**（背景=真实帧+物理变体，目标=真实标注实例，标签0丢失），val L1 0.0282，ONNX 自包含） | 4.79 | 10.3ms |
+| `dav2-lite-256` | 深度 | 自训 DepthLite（ViT-tiny patch16/dim128/4层 1.11M，**R9 真实场景蒸馏**：教师=官方DAV2-small-INT8×真实ROV帧1640对，5/5 帧结构保真 corr 0.86-0.97，修复旧版渐变先验退化） | 4.79 | 8.8ms |
 | `official_dav2_hf` | 深度 | 官方 Depth-Anything-V2-Small ONNX（浏览器直连 HuggingFace） | ~99MB | 视设备 |
 
 > 官方 DAV2 权重最终经 GitHub 第三方仓库（rydersd/ill-tool）直取 INT8 量化版入库（sha256_8=01aa7a23，27.26MB）；
