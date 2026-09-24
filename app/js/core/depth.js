@@ -6,7 +6,7 @@
  */
 import { logger } from '../utils/logger.js';
 
-const ORT_BASE = './vendor/ort/';
+const ORT_BASE = '/vendor/ort/';   // 绝对路径：模块位于 /js/core/，相对路径会错误解析
 
 /* turbo 近似色带（0=近蓝 1=远红） */
 const STOPS = [

@@ -1,0 +1,35 @@
+{
+  "subtask": 3,
+  "round": "1",
+  "model": "yolo26n-water-320",
+  "startedAt": "2026-09-24T01:28:20.449Z",
+  "inference": [
+    {
+      "img": "vid_000132_frame0000018.jpg",
+      "n": 0,
+      "trash": 0,
+      "ms": 1879.4,
+      "infer": 1804.9
+    },
+    {
+      "img": "vid_000132_frame0000019.jpg",
+      "n": 0,
+      "trash": 0,
+      "ms": 655.7,
+      "infer": 640
+    },
+    {
+      "img": "vid_000132_frame0000052.jpg",
+      "n": 0,
+      "trash": 0,
+      "ms": 369.4,
+      "infer": 365.1
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "pass": 7,
+    "fail": 1
+  },
+  "finishedAt": "2026-09-24T01:28:39.436Z"
+}

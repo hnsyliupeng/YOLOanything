@@ -7,7 +7,7 @@
 import { logger } from '../utils/logger.js';
 import { bus } from './events.js';
 
-const ORT_BASE = './vendor/ort/';
+const ORT_BASE = '/vendor/ort/';   // 绝对路径：模块位于 /js/core/，相对路径会错误解析
 
 export const CLASS_NAMES = [
   'rov', 'plant', 'animal_fish', 'animal_starfish', 'animal_shells', 'animal_crab',

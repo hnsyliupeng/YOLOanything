@@ -16,6 +16,8 @@ import { DepthSession } from './core/depth.js';
 import { buildRelationGraph, sma3Enhance, graphSummary } from './core/relations.js';
 import { renderDepthOverlay } from './core/depth.js';
 import { initROI, paint as paintROI } from './ui/roi.js';
+import { initAlerts, evaluateAlerts } from './ui/alerts.js';
+import { initExports, addRecord } from './ui/exports.js';
 
 const APP_VERSION = '0.1.0';
 
@@ -69,9 +71,28 @@ async function boot() {
     else renderer.start();
   });
 
-  /* 设备丢失恢复 */
+  /* 设备丢失恢复（8 次熔断：WebGPU 反复丢失则换新画布永久回退 Canvas2D） */
+  let gpuLossCount = 0;
   gpu.onDeviceLost(async () => {
     renderer.stop();
+    gpuLossCount++;
+    if (gpuLossCount > 8) {
+      try {
+        gpu.backend = 'canvas2d';
+        renderer._context = null;
+        const nc = document.createElement('canvas');   // webgpu context 类型无法改回 2d，换新画布
+        nc.id = canvas.id; nc.width = canvas.width; nc.height = canvas.height;
+        canvas.replaceWith(nc);
+        renderer.canvas = nc;
+        await renderer.init();
+        renderer.resize();
+        renderer.start();
+        setState({ backend: 'canvas2d' }, 'backend');
+        bus.emit('gpu:ready', { backend: 'canvas2d', summary: gpu.summary() });
+        logger.warn(`[Boot] WebGPU 反复丢失(${gpuLossCount}次)，已熔断回退 Canvas2D`);
+      } catch (e) { logger.error('[Boot] Canvas2D 回退失败:', e.message); }
+      return;
+    }
     const delay = gpu.nextRecoveryDelay();          // 指数退避，防重初始化风暴
     await new Promise(r => setTimeout(r, delay));
     await gpu.init(canvas, { reuseAdapter: true }); // 复用适配器加速恢复
