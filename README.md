@@ -68,6 +68,8 @@ python3 scripts/server.py --port 8000 --root app
 |---|---|---|---|---|
 | `yolo26n-water-640` | 检测+分割 | YOLO26n-seg @640 水上垃圾 16 类 | 10.6MB | ~1.4-1.6s（R3 期 wasm CPU 实测） |
 | `yolo26n-water-320` | 检测+分割 | 同上 @320（快速档） | 10.5MB | ~0.8-0.9s（R6 期 wasm CPU 实测 805ms@空闲） |
+| `yolo26n-water-fused-320` | 检测+分割 | **YOLO26n-seg × Depth 融合 @320（Y-D-S 三通道，R8 权重，box mAP50 0.1322=28×R6）** | 11.0MB | ~0.13-0.36s（round8 wasm 实测） |
+| `yolo26n-water-fused-640` | 检测+分割 | 同上 @640 | 11.1MB | 视设备 |
 | `dav2-small-int8` | 深度 | **官方 Depth-Anything-V2-Small INT8 量化（27MB，已入库，默认）** | 27.26 | 视设备 |
 | `dav2-lite-256` | 深度 | 自训 DepthLite（ViT-tiny patch16/dim128/4层 1.11M，**真实ROV帧物理复合**（背景=真实帧+物理变体，目标=真实标注实例，标签0丢失），val L1 0.0282，ONNX 自包含） | 4.79 | 10.3ms |
 | `official_dav2_hf` | 深度 | 官方 Depth-Anything-V2-Small ONNX（浏览器直连 HuggingFace） | ~99MB | 视设备 |
@@ -92,7 +94,8 @@ python3 scripts/server.py --port 8000 --root app
 | R2（历史） | 6ep×50% 续训 | 0.0321 | — | 同上 |
 | R3（历史） | 4ep×100% 热启动 | **0.0957** | 0.0974 | 历史最好；runs 产物遗失，曲线图幸存 `results/detection/三轮对比曲线.png` |
 | R6（本次） | 4ep×40% @320 SGD lr0.02 从零 | 0.00472 | 0.006 | 短周期链式训练（train→export→eval 一条 start_process） |
-| R7（修正轮·进行中） | 6ep×100% @320 SGD lr0.008 合成数据续R6 | e4=**0.0452**（9.6×R6） | e4 进行中 | 回归修复：5328 全量×100% 裁幅+合成数据合规增强；e1-e4 四连上坡 |
+| R7（修正轮） | 6ep×100% @320 SGD lr0.008 r6热启动 | **0.0943**（20×R6） | 0.0957 | 召回修复：六连上坡，R 0.0217→0.1388 |
+| R8（融合轮） | 6ep×100% @320 SGD lr0.006 r7热启动，Y-D-S 三通道（DepthLite 伪深度×5830 合成） | **0.1322**（28×R6，1.40×R7） | **0.1278** | 多模态融合：六连上坡，检出图 256→319/502，浏览器 20/20 |
 
 - 对比曲线：`results/detection/训练对比曲线.png`（`scripts/plot_curves.py` 动态扫描 training/runs/r*）
 - 预测可视化：`results/detection/r6_val预测可视化.png`（检测框+mask+置信度，9 张 val 样例）
@@ -117,7 +120,7 @@ tools/               测试工具链（package.json、extract-chromium.mjs、fon
 |---|---|---|---|
 | ① 骨架+WebGPU | 18 轮循环，终态 53/53 断言 | `docs/reports/子任务1_测试报告.md` | `docs/screenshots/subtask1/` |
 | ② 数据集 | 3 轮，26/26 断言，5328/502/178/1204 | `docs/reports/子任务2_测试报告.md` | 预览图 |
-| ③ YOLO26 训练+导出 | R4 复验 16/16 浏览器断言；R6 从零短训不足（mAP50 0.0047，用户证图）→ **修正轮 R7 热启动续训 + R8 融合**进行中 | `docs/reports/子任务3_测试报告.md` · `subtask3_round4.md` · `多模态修正轮_测试报告.md` | `docs/screenshots/subtask3/` |
+| ③ YOLO26 训练+导出 | R4 复验 16/16 浏览器断言；R6 从零短训不足（0.0047）→ 修正轮 **R7 0.0943 + R8 Y-D-S 融合 0.1322（28×R6）** 终态，浏览器融合实测 20/20 | `docs/reports/子任务3_测试报告.md` · `subtask3_round4.md` · `多模态修正轮_测试报告.md` | `docs/screenshots/subtask3/` · `docs/screenshots/multimodal/` |
 | ④ 深度集成 | 双轨：官方 DAV2 INT8 99MB 网页版 + DepthLite 自训（**合规重建**：真实ROV帧物理复合，标签0丢失，val L1 0.0293） | `docs/reports/子任务4_测试报告.md`（含合规修正节） | `results/depth/真实复合预览.png` |
 | ⑤ RelateAnything+SMA3 | 36边3簇、关系增强10目标（前端联调过） | `docs/reports/子任务5_测试报告.md` | `docs/screenshots/subtask5/` |
 | ⑥ 图像全功能 | ROI 11→0 过滤+检测/分割/深度/统计全功能 | `docs/reports/子任务6_测试报告.md` | `docs/screenshots/subtask6/` |
