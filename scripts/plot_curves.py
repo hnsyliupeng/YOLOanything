@@ -69,6 +69,7 @@ def main():
 
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.6))
     summary = []
+    ax2 = axes[0].twinx()   # 训练损失右轴（与 mAP 左轴分离刻度）
     for i, r in enumerate(rounds):
         c = PALETTE[i % len(PALETTE)]
         hdr, rows = r["hdr"], r["rows"]
@@ -86,17 +87,18 @@ def main():
             summary.append((r["label"], box50[-1], mask50[-1] if mask50 else float("nan")))
         if mask50:
             ax.plot(ep, mask50, "--s", ms=3, color=c, alpha=.65, label=f"{r['label']} mask")
-        # loss（细线，右轴太挤则省略）——画在左图淡显
+        # loss（细线画在右轴，与 mAP 分离刻度）
         for key, ls in (("train/box_loss", ":"), ("train/seg_loss", "-.")):
             s = series(key)
             if s:
-                ax.plot(ep, [v * max(box50 or [1]) * 0 + v for v in s], ls, color=c, alpha=.18, lw=1)
+                ax2.plot(ep, s, ls, color=c, alpha=.22, lw=1)
 
-    axes[0].set_title("验证集 mAP 随 epoch 收敛（实线box/虚线mask；淡细线=train loss 原值）")
+    axes[0].set_title("验证集 mAP 随 epoch 收敛（实线box/虚线mask；淡细线=train loss·右轴）")
     axes[0].set_xlabel("epoch")
-    axes[0].set_ylabel("mAP50 / loss(原值)")
-    axes[0].legend(fontsize=7)
+    axes[0].set_ylabel("mAP50")
+    axes[0].legend(fontsize=7, loc="upper left")
     axes[0].grid(alpha=.3)
+    ax2.set_ylabel("train loss（右轴，淡线）", fontsize=8, alpha=.6)
 
     names = [s[0] for s in summary]
     bars = axes[1].bar(range(len(summary)), [s[1] for s in summary],
