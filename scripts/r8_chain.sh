@@ -12,7 +12,7 @@ R7E=$(done_epochs r7); R8E=$(done_epochs r8)
 echo "═══ 断点侦测: r7=${R7E}/6ep r8=${R8E}/6ep ═══"
 
 # 阶段完成门：results.csv 会被 ultralytics 新 run 覆写导致行数低估，故辅以 commit 标记双保险
-if [ "$R7E" -lt 6 ] && [ -z "$(git log --oneline | grep -m1 '阶段1' || true)" ]; then
+if [ "$R7E" -lt 6 ] && [ -z "$(git log --oneline | grep -m1 'R7续训完成' || true)" ]; then
   INIT=training/runs/r6/weights/best.pt
   REM=$((6 - R7E))
   if [ "$R7E" -gt 0 ] && [ -f training/runs/r7/weights/last.pt ] && pt_ok training/runs/r7/weights/last.pt; then
@@ -45,7 +45,7 @@ if [ ! -d data/datasets/water_trash_fused/images ]; then
   echo "FUSED_DATA_DONE"
 fi
 
-if [ "$R8E" -lt 6 ] && [ -z "$(git log --oneline | grep -m1 'R8多模态训练完成' || true)" ]; then
+if [ "$R8E" -lt 6 ]; then
   INIT=training/runs/r7/weights/best.pt
   REM=$((6 - R8E))
   if [ "$R8E" -gt 0 ] && [ -f training/runs/r8/weights/last.pt ] && pt_ok training/runs/r8/weights/last.pt; then
