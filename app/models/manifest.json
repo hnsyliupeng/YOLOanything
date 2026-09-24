@@ -115,31 +115,6 @@
    "ort_cpu_ms": 120.0
   },
   {
-   "id": "dav2-lite-256",
-   "file": "depth-lite-256.onnx",
-   "arch": "depth-lite (DAV2-style ViT-tiny+DPT)",
-   "task": "depth",
-   "imgsz": 256,
-   "outputs": [
-    [
-     1,
-     1,
-     256,
-     256
-    ]
-   ],
-   "input": "1x3x256x256 NCHW RGB 0-1",
-   "end2end_nms_free": true,
-   "classes": 0,
-   "class_names": [],
-   "params_m": 1.11,
-   "trained_on": "真实ROV帧物理复合(真实实例+标签同步迁移, gen_real_composite_depth)",
-   "official_dav2_hf": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.onnx",
-   "sha256_8": "d0a17df8",
-   "size_mb": 4.79,
-   "ort_cpu_ms": 10.3
-  },
-  {
    "id": "yolo26n-water-fused-320",
    "file": "yolo26n-seg-fused-320.onnx",
    "arch": "yolo26n-seg",
@@ -232,7 +207,32 @@
    "ort_cpu_ms": 99.5,
    "tag": "fused",
    "preprocess": "yds"
+  },
+  {
+   "id": "dav2-lite-256",
+   "file": "depth-lite-256.onnx",
+   "arch": "depth-lite (DAV2-style ViT-tiny+DPT, R9 蒸馏版)",
+   "task": "depth",
+   "imgsz": 256,
+   "outputs": [
+    [
+     1,
+     1,
+     256,
+     256
+    ]
+   ],
+   "input": "1x3x256x256 NCHW RGB 0-1",
+   "end2end_nms_free": true,
+   "classes": 0,
+   "class_names": [],
+   "params_m": 1.11,
+   "trained_on": "R9 真实场景蒸馏: 教师=官方DAV2-small-INT8 对真实 water_trash 帧的真实推理(1640对, distill_depth_gt.py), val L1 0.0979",
+   "official_dav2_hf": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.onnx",
+   "sha256_8": "e954d9b2",
+   "size_mb": 4.79,
+   "ort_cpu_ms": 8.8
   }
  ],
- "updated": "2026-09-24 17:01:36"
+ "updated": "2026-09-24 18:10:23"
 }
