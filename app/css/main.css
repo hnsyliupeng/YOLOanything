@@ -388,3 +388,15 @@ input[type="range"]::-webkit-slider-thumb {
 /* ── 子任务6/7：媒体专用画布（view-canvas 归 renderer，媒体激活时隐藏） ── */
 #media-canvas { position: absolute; z-index: 1; }
 #canvas-stack.media-active #view-canvas { display: none; }
+
+/* ── 子任务7：视频/摄像头模式控件条 ── */
+#mode-panels { position: absolute; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 6; width: min(92%, 760px); }
+#mode-panels .vp-row {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center;
+  background: rgba(8, 14, 26, .88); border: 1px solid var(--line); border-radius: 12px;
+  padding: 8px 16px; backdrop-filter: blur(6px);
+}
+.vp-check, .vp-interval { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tx-2); }
+.vp-interval input[type="range"] { width: 110px; }
+.vp-status { font-size: 12px; color: var(--tx-3); font-family: var(--mono); }
+.select-chip { background: var(--bg-2); color: var(--tx-1); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; font-size: 12px; max-width: 220px; }

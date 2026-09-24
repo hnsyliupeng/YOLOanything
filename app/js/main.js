@@ -214,6 +214,10 @@ async function boot() {
   initAlerts();
   initExports();
 
+  /* ── 视频/摄像头模式（子任务7）── */
+  const { initVideo } = await import('./ui/video.js');
+  await initVideo();
+
   /* ── 推理执行（图像模式完整流程：检测→深度→关系→渲染→统计） ── */
   bus.on('infer:run', async () => {
     if (!media.bitmap || !H.detectSession) {
