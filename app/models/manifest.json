@@ -1,21 +1,20 @@
 {
   "models": [
     {
-      "id": "dav2-small-int8",
-      "file": "depth-anything-v2-small-int8.onnx",
-      "arch": "depth-anything-v2-small-int8",
+      "id": "dav2-small-web",
+      "file": "depth-anything-v2-small-web.onnx",
+      "arch": "depth-anything-v2-small (官方权重INT8→浮点图重写)",
       "task": "depth",
       "input_size": 392,
       "input_size_mult": 14,
+      "preprocess": "imagenet",
       "input_name": "pixel_values",
       "output_name": "predicted_depth",
-      "input": "1x3xHxW fp32 (H,W为14的倍数)",
+      "input": "1x3xHxW fp32 (H,W为14的倍数), ImageNet归一化",
       "output": "1xHxW 相对深度(值越小越近)",
       "dynamic_input": true,
-      "sha256_8": "01aa7a23",
-      "size_mb": 27.26,
-      "source": "github.com/rydersd/ill-tool (DAV2官方权重INT8量化)",
-      "note": "官方DAV2-Small INT8量化版，沙箱内GitHub直取入库，浏览器本地加载"
+      "size_mb": 99.3,
+      "source": "rydersd/ill-tool INT8 → scripts/dequant_dav2.py 精确重写(逐位一致验证)"
     },
     {
       "id": "official_dav2_hf",

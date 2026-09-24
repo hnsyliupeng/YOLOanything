@@ -24,8 +24,9 @@ function turbo(t) {
 export class DepthSession {
   constructor() { this.session = null; this.backend = null; this.input = 256; }
 
-  async load(preferWebGPU = true, filePath = './models/depth-lite-256.onnx', { inputSize = 256 } = {}) {
+  async load(preferWebGPU = true, filePath = './models/depth-lite-256.onnx', { inputSize = 256, norm = null } = {}) {
     this.input = inputSize;
+    this.norm = norm;               // 'imagenet'：官方DAV2期望 ImageNet 归一化输入
     const ort = await import(ORT_BASE + 'ort.all.bundle.min.mjs');
     this.ort = ort;
     ort.env.wasm.wasmPaths = ORT_BASE;
@@ -54,8 +55,14 @@ export class DepthSession {
     const px = g.getImageData(0, 0, this.in, this.in).data;
     const f = new Float32Array(3 * this.in * this.in);
     const plane = this.in * this.in;
+    const IMN = [0.485, 0.456, 0.406], IMS = [0.229, 0.224, 0.225];
     for (let i = 0, j = 0; i < plane; i++, j += 4) {
-      f[i] = px[j] / 255; f[i + plane] = px[j + 1] / 255; f[i + 2 * plane] = px[j + 2] / 255;
+      const r = px[j] / 255, g2 = px[j + 1] / 255, b = px[j + 2] / 255;
+      if (this.norm === 'imagenet') {
+        f[i] = (r - IMN[0]) / IMS[0]; f[i + plane] = (g2 - IMN[1]) / IMS[1]; f[i + 2 * plane] = (b - IMN[2]) / IMS[2];
+      } else {
+        f[i] = r; f[i + plane] = g2; f[i + 2 * plane] = b;
+      }
     }
     const tensor = new this.ort.Tensor('float32', f, [1, 3, this.in, this.in]);
     const t0 = performance.now();
