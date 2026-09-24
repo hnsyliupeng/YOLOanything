@@ -1,0 +1,10 @@
+# 第4次重置后依据会话记录重建（原文件随 results.csv 丢失）
+epochs: 4
+imgsz: 320
+fraction: 0.4
+optimizer: SGD
+lr0: 0.02
+batch: 8
+task: segment
+model: yolo26n-seg.pt
+data: water_trash.yaml
