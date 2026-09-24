@@ -108,13 +108,17 @@ async function boot() {
       H.detectSession = await new DetectSession().load(state.models.detect, H.manifest, { preferWebGPU: backendOK });
       state.models.loaded.detect = true;
       bus.emit('models:loaded', { detect: true });
-      // 深度模型（存在则加载，失败不阻塞检测）
+      // 深度模型（按选择器 id 加载；缺失则回退到 manifest 首个 depth 条目；失败不阻塞检测）
       try {
-        const dmeta = H.manifest.models.find(m => m.task === 'depth');
+        const dId = state.models.depth;
+        const dmeta = H.manifest.models.find(m => m.id === dId) || H.manifest.models.find(m => m.task === 'depth');
         if (dmeta) {
-          H.depthSession = await new DepthSession().load(backendOK, `./models/${dmeta.file}`);
+          const src = dmeta.url || `./models/${dmeta.file}`;
+          H.depthSession = await new DepthSession().load(backendOK, src);
           state.models.loaded.depth = true;
           bus.emit('models:loaded', { depth: true });
+        } else {
+          logger.info('[Models] manifest 无深度模型条目（轨A自训后可用）');
         }
       } catch (de) { logger.warn('[Models] 深度模型加载失败(不影响检测):', de.message); }
       toast(`模型已加载 (检测:${H.detectSession.backend}${H.depthSession ? ' / 深度:' + H.depthSession.backend : ''})`, 'ok');
