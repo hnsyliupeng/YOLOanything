@@ -2,7 +2,8 @@
 """
 子任务4-A：轻量深度估计网络训练（DAV2架构风格: ViT微编码器 + DPT解码头）
 ========================================================================
-数据：scripts/gen_syn_depth.py 生成的合成水上场景（解析深度真值）
+数据：scripts/gen_real_composite_depth.py 生成的真实数据物理复合
+     （背景=真实ROV帧+物理变体，目标=真实标注实例，标签同步迁移0丢失，深度GT=摆放物理）
 架构：PatchEmbed(8x8) × 6层Transformer(dim=192) + 轻量DPT(多尺度融合上采样)
 输出：app/models/depth-lite-256.onnx + manifest 更新
 注：沙箱无GPU/官方权重被墙 → 自监督闭环；用户环境可经 manifest hf_url 加载官方 DAV2
@@ -17,6 +18,7 @@ import cv2
 import numpy as np
 
 REPO = Path(__file__).resolve().parent.parent
+DATA_NAME = "real_depth"          # 真实数据物理复合数据集（合规）
 
 
 # ───────────────────────── 模型（纯PyTorch, 无torchvision依赖） ─────────────────────────
@@ -77,7 +79,7 @@ def build_model():
 
 def list_data(split, limit=None):
     """只列文件路径（惰性加载：沙箱仅3GB内存，全量预载3GB+必OOM）"""
-    d = REPO / "data" / "datasets" / "syn_depth" / split
+    d = REPO / "data" / "datasets" / DATA_NAME / split
     imgs = sorted(d.glob("*.jpg"))
     if limit:
         imgs = imgs[:limit]
@@ -190,7 +192,7 @@ def main():
         id="dav2-lite-256", file="depth-lite-256.onnx", arch="depth-lite (DAV2-style ViT-tiny+DPT)",
         task="depth", imgsz=256, outputs=[list(o.shape)], input="1x3x256x256 NCHW RGB 0-1",
         end2end_nms_free=True, classes=0, class_names=[],
-        params_m=round(n_params, 2), trained_on="合成水上场景(解析深度), 沙箱自训练",
+        params_m=round(n_params, 2), trained_on="真实ROV帧物理复合(真实实例+标签同步迁移, gen_real_composite_depth)",
         official_dav2_hf="https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.onnx",
         sha256_8=hashlib.sha256(target.read_bytes()).hexdigest()[:8],
         size_mb=round(target.stat().st_size / 1e6, 2),
