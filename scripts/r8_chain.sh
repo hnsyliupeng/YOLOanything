@@ -5,6 +5,8 @@ set -e
 cd "$(dirname "$0")/.."
 P=.venv/bin/python
 done_epochs() { [ -f "training/runs/$1/results.csv" ] && awk 'END{print NR-1}' "training/runs/$1/results.csv" || echo 0; }
+# checkpoint 完整性校验（watcher 可能快照到半写状态的 last.pt）
+pt_ok() { $P -c "import torch,sys; torch.load(sys.argv[1], map_location='cpu', weights_only=True)" "$1" >/dev/null 2>&1; }
 
 R7E=$(done_epochs r7); R8E=$(done_epochs r8)
 echo "═══ 断点侦测: r7=${R7E}/6ep r8=${R8E}/6ep ═══"
@@ -12,9 +14,12 @@ echo "═══ 断点侦测: r7=${R7E}/6ep r8=${R8E}/6ep ═══"
 if [ "$R7E" -lt 6 ]; then
   INIT=training/runs/r6/weights/best.pt
   REM=$((6 - R7E))
-  if [ "$R7E" -gt 0 ] && [ -f training/runs/r7/weights/last.pt ]; then
+  if [ "$R7E" -gt 0 ] && [ -f training/runs/r7/weights/last.pt ] && pt_ok training/runs/r7/weights/last.pt; then
     INIT=training/runs/r7/weights/last.pt
     echo "═══ 阶段1(续)：R7 从 last.pt 续 ${REM}ep ═══"
+  elif [ "$R7E" -gt 0 ] && [ -f training/runs/r7/weights/best.pt ] && pt_ok training/runs/r7/weights/best.pt; then
+    INIT=training/runs/r7/weights/best.pt
+    echo "═══ 阶段1(续)：last.pt 损坏，退回 r7/best.pt 续 ${REM}ep ═══"
   else
     echo "═══ 阶段1：R7 续训（R6热启动 6ep）═══"
   fi
@@ -42,9 +47,12 @@ fi
 if [ "$R8E" -lt 6 ]; then
   INIT=training/runs/r7/weights/best.pt
   REM=$((6 - R8E))
-  if [ "$R8E" -gt 0 ] && [ -f training/runs/r8/weights/last.pt ]; then
+  if [ "$R8E" -gt 0 ] && [ -f training/runs/r8/weights/last.pt ] && pt_ok training/runs/r8/weights/last.pt; then
     INIT=training/runs/r8/weights/last.pt
     echo "═══ 阶段4(续)：R8 从 last.pt 续 ${REM}ep ═══"
+  elif [ "$R8E" -gt 0 ] && [ -f training/runs/r8/weights/best.pt ] && pt_ok training/runs/r8/weights/best.pt; then
+    INIT=training/runs/r8/weights/best.pt
+    echo "═══ 阶段4(续)：last.pt 损坏，退回 r8/best.pt 续 ${REM}ep ═══"
   else
     echo "═══ 阶段4：R8 多模态训练（fused, R7热启动）═══"
   fi
