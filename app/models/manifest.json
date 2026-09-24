@@ -1,103 +1,120 @@
 {
- "models": [
-  {
-   "id": "official_dav2_hf",
-   "task": "depth",
-   "arch": "Depth-Anything-V2-Small (官方)",
-   "url": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.onnx",
-   "size_mb": 99.0,
-   "note": "浏览器直连 HuggingFace 加载；沙箱/墙内环境不可用，用 dav2-lite-256 替代"
-  },
-  {
-   "id": "yolo26n-water-640",
-   "file": "yolo26n-seg-640.onnx",
-   "arch": "yolo26n-seg",
-   "task": "segment",
-   "imgsz": 640,
-   "outputs": [
-    [
-     1,
-     300,
-     38
-    ],
-    [
-     1,
-     32,
-     160,
-     160
-    ]
-   ],
-   "input": "1x3x640x640 NCHW RGB 0-1",
-   "end2end_nms_free": true,
-   "max_det": 300,
-   "classes": 16,
-   "class_names": [
-    "rov",
-    "plant",
-    "animal_fish",
-    "animal_starfish",
-    "animal_shells",
-    "animal_crab",
-    "animal_eel",
-    "animal_etc",
-    "trash_etc",
-    "trash_fabric",
-    "trash_fishing_gear",
-    "trash_metal",
-    "trash_paper",
-    "trash_plastic",
-    "trash_rubber",
-    "trash_wood"
-   ],
-   "sha256_8": "9f5670d1",
-   "size_mb": 11.09,
-   "ort_cpu_ms": 104.0
-  },
-  {
-   "id": "yolo26n-water-320",
-   "file": "yolo26n-seg-320.onnx",
-   "arch": "yolo26n-seg",
-   "task": "segment",
-   "imgsz": 320,
-   "outputs": [
-    [
-     1,
-     300,
-     38
-    ],
-    [
-     1,
-     32,
-     80,
-     80
-    ]
-   ],
-   "input": "1x3x320x320 NCHW RGB 0-1",
-   "end2end_nms_free": true,
-   "max_det": 300,
-   "classes": 16,
-   "class_names": [
-    "rov",
-    "plant",
-    "animal_fish",
-    "animal_starfish",
-    "animal_shells",
-    "animal_crab",
-    "animal_eel",
-    "animal_etc",
-    "trash_etc",
-    "trash_fabric",
-    "trash_fishing_gear",
-    "trash_metal",
-    "trash_paper",
-    "trash_plastic",
-    "trash_rubber",
-    "trash_wood"
-   ],
-   "sha256_8": "0697b82e",
-   "size_mb": 10.97,
-   "ort_cpu_ms": 30.1
-  }
- ],
- "updated": "2026-09-24 01:21:43"
+  "models": [
+    {
+      "id": "dav2-small-int8",
+      "file": "depth-anything-v2-small-int8.onnx",
+      "arch": "depth-anything-v2-small-int8",
+      "task": "depth",
+      "input_size": 392,
+      "input_size_mult": 14,
+      "input_name": "pixel_values",
+      "output_name": "predicted_depth",
+      "input": "1x3xHxW fp32 (H,W为14的倍数)",
+      "output": "1xHxW 相对深度(值越小越近)",
+      "dynamic_input": true,
+      "sha256_8": "01aa7a23",
+      "size_mb": 27.26,
+      "source": "github.com/rydersd/ill-tool (DAV2官方权重INT8量化)",
+      "note": "官方DAV2-Small INT8量化版，沙箱内GitHub直取入库，浏览器本地加载"
+    },
+    {
+      "id": "official_dav2_hf",
+      "task": "depth",
+      "arch": "Depth-Anything-V2-Small (官方)",
+      "url": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.onnx",
+      "size_mb": 99.0,
+      "note": "浏览器直连 HuggingFace 加载；沙箱/墙内环境不可用，用 dav2-lite-256 替代"
+    },
+    {
+      "id": "yolo26n-water-640",
+      "file": "yolo26n-seg-640.onnx",
+      "arch": "yolo26n-seg",
+      "task": "segment",
+      "imgsz": 640,
+      "outputs": [
+        [
+          1,
+          300,
+          38
+        ],
+        [
+          1,
+          32,
+          160,
+          160
+        ]
+      ],
+      "input": "1x3x640x640 NCHW RGB 0-1",
+      "end2end_nms_free": true,
+      "max_det": 300,
+      "classes": 16,
+      "class_names": [
+        "rov",
+        "plant",
+        "animal_fish",
+        "animal_starfish",
+        "animal_shells",
+        "animal_crab",
+        "animal_eel",
+        "animal_etc",
+        "trash_etc",
+        "trash_fabric",
+        "trash_fishing_gear",
+        "trash_metal",
+        "trash_paper",
+        "trash_plastic",
+        "trash_rubber",
+        "trash_wood"
+      ],
+      "sha256_8": "9f5670d1",
+      "size_mb": 11.09,
+      "ort_cpu_ms": 104.0
+    },
+    {
+      "id": "yolo26n-water-320",
+      "file": "yolo26n-seg-320.onnx",
+      "arch": "yolo26n-seg",
+      "task": "segment",
+      "imgsz": 320,
+      "outputs": [
+        [
+          1,
+          300,
+          38
+        ],
+        [
+          1,
+          32,
+          80,
+          80
+        ]
+      ],
+      "input": "1x3x320x320 NCHW RGB 0-1",
+      "end2end_nms_free": true,
+      "max_det": 300,
+      "classes": 16,
+      "class_names": [
+        "rov",
+        "plant",
+        "animal_fish",
+        "animal_starfish",
+        "animal_shells",
+        "animal_crab",
+        "animal_eel",
+        "animal_etc",
+        "trash_etc",
+        "trash_fabric",
+        "trash_fishing_gear",
+        "trash_metal",
+        "trash_paper",
+        "trash_plastic",
+        "trash_rubber",
+        "trash_wood"
+      ],
+      "sha256_8": "0697b82e",
+      "size_mb": 10.97,
+      "ort_cpu_ms": 30.1
+    }
+  ],
+  "updated": "2026-09-24 01:21:43"
 }
