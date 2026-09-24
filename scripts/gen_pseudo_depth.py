@@ -5,7 +5,7 @@
 用自训 DepthLite（app/models/depth-lite-256.onnx）对 water_trash 全部图像推理
 相对深度，逐图对比度拉伸后存为 8-bit 灰度 JPG（与原图同尺寸、同名）。
 输出：data/datasets/depth_maps/{split}/xxx.jpg
-说明：DepthLite 在合成水上场景训练，跨域到 ROV 海底图像提供的是
+说明：DepthLite 在真实数据物理复合集（real_depth，标签0丢失）上训练，跨域到 ROV 海底图像提供的是
 「场景几何/凸起先验」而非真实度量深度——作为多模态输入通道使用。
 """
 import argparse
