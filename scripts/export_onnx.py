@@ -41,7 +41,23 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     model = YOLO(str(weights))
     names = model.names
-    manifest = dict(models=[])
+    # 合并式 manifest：保留既有非本次导出条目（如深度模型），仅替换同 id 检测条目
+    man_p = out_dir / "manifest.json"
+    old_models = []
+    if man_p.exists():
+        try:
+            old_models = json.loads(man_p.read_text()).get("models", [])
+        except Exception as e:
+            print(f"!! 旧 manifest 解析失败，按全新处理: {e}")
+    regen_ids = {f"yolo26n-water-{s}" for s in [int(s) for s in args.sizes.split(",")]}
+    manifest = dict(models=[m for m in old_models if m.get("id") not in regen_ids])
+    # official_dav2_hf 条目（轨B：用户浏览器直连 HF，沙箱内不可下载）
+    if not any(m.get("id") == "official_dav2_hf" for m in manifest["models"]):
+        manifest["models"].append(dict(
+            id="official_dav2_hf", task="depth", arch="Depth-Anything-V2-Small (官方)",
+            url="https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.onnx",
+            size_mb=99.0, note="浏览器直连 HuggingFace 加载；沙箱/墙内环境不可用，用 dav2-lite-256 替代",
+        ))
 
     for sz in [int(s) for s in args.sizes.split(",")]:
         print(f"\n═══ 导出 imgsz={sz} ═══")
