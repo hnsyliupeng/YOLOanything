@@ -1,0 +1,95 @@
+{
+ "models": [
+  {
+   "id": "yolo26n-water-640",
+   "file": "yolo26n-seg-640.onnx",
+   "arch": "yolo26n-seg",
+   "task": "segment",
+   "imgsz": 640,
+   "outputs": [
+    [
+     1,
+     300,
+     38
+    ],
+    [
+     1,
+     32,
+     160,
+     160
+    ]
+   ],
+   "input": "1x3x640x640 NCHW RGB 0-1",
+   "end2end_nms_free": true,
+   "max_det": 300,
+   "classes": 16,
+   "class_names": [
+    "rov",
+    "plant",
+    "animal_fish",
+    "animal_starfish",
+    "animal_shells",
+    "animal_crab",
+    "animal_eel",
+    "animal_etc",
+    "trash_etc",
+    "trash_fabric",
+    "trash_fishing_gear",
+    "trash_metal",
+    "trash_paper",
+    "trash_plastic",
+    "trash_rubber",
+    "trash_wood"
+   ],
+   "sha256_8": "21ba3008",
+   "size_mb": 11.09,
+   "ort_cpu_ms": 107.6
+  },
+  {
+   "id": "yolo26n-water-320",
+   "file": "yolo26n-seg-320.onnx",
+   "arch": "yolo26n-seg",
+   "task": "segment",
+   "imgsz": 320,
+   "outputs": [
+    [
+     1,
+     300,
+     38
+    ],
+    [
+     1,
+     32,
+     80,
+     80
+    ]
+   ],
+   "input": "1x3x320x320 NCHW RGB 0-1",
+   "end2end_nms_free": true,
+   "max_det": 300,
+   "classes": 16,
+   "class_names": [
+    "rov",
+    "plant",
+    "animal_fish",
+    "animal_starfish",
+    "animal_shells",
+    "animal_crab",
+    "animal_eel",
+    "animal_etc",
+    "trash_etc",
+    "trash_fabric",
+    "trash_fishing_gear",
+    "trash_metal",
+    "trash_paper",
+    "trash_plastic",
+    "trash_rubber",
+    "trash_wood"
+   ],
+   "sha256_8": "996358fa",
+   "size_mb": 10.97,
+   "ort_cpu_ms": 29.1
+  }
+ ],
+ "updated": "2026-09-23 03:59:04"
+}

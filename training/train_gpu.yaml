@@ -1,0 +1,41 @@
+# AquaScan 水上垃圾 YOLO26 训练配置（GPU 全量 · 推荐用户环境）
+# 架构: YOLO26n-seg (3.06M params) | 数据: TrashCan-material 16类 (data/datasets/water_trash)
+#
+# 用法（有 NVIDIA GPU 时）:
+#   yolo segment train data=data/datasets/water_trash/dataset.yaml \
+#     model=yolo26n-seg.pt epochs=150 imgsz=640 batch=16 device=0 \
+#     optimizer=SGD lr0=0.01 lrf=0.01 momentum=0.937 weight_decay=0.0005 \
+#     warmup_epochs=3 cos_lr=True patience=50 plots=True
+#
+# 追求精度（s/m 尺度）:
+#   model=yolo26s-seg.pt  batch=16  imgsz=800   # TrashCan 大目标为主，800px 收益明显
+#
+# 沙箱 CPU 复现（本项目 Loop Hardness 用的配置，见 docs/reports/子任务3_测试报告.md）:
+#   .venv/bin/python scripts/train.py --round 3 --epochs 4 --imgsz 320 --optimizer SGD --lr0 0.01
+
+# ── 数据 ──
+path: data/datasets/water_trash
+train: images/train
+val: images/val
+test: images/test
+
+# ── 类别（16）──
+# 0 rov 1 plant 2 animal_fish 3 animal_starfish 4 animal_shells 5 animal_crab
+# 6 animal_eel 7 animal_etc 8 trash_etc 9 trash_fabric 10 trash_fishing_gear
+# 11 trash_metal 12 trash_paper 13 trash_plastic 14 trash_rubber 15 trash_wood
+
+# ── 类别不均衡对策（可选，roboflow/tamm 参考）──
+# trash_* 类实例多但形态分散；animal_* 小类建议:
+#   1) 过采样含小类图像: fraction 采样时按类别签名分层（preprocess.py 已实现）
+#   2) loss 类别权重: ultralytics 暂不支持 cls weight per class，用 copy_paste 增广小类
+copy_paste: 0.3        # 分割任务实例粘贴，小类增广
+mosaic: 1.0
+close_mosaic: 15
+hsv_v: 0.5             # 水下光照变化大
+scale: 0.6
+erasing: 0.2
+
+# ── 导出 ──
+# 训练完成后:
+#   .venv/bin/python scripts/export_onnx.py --weights training/runs/<name>/weights/best.pt
+# 产物: app/models/yolo26n-seg-{640,320}.onnx + manifest.json（WebGPU 前端直用）

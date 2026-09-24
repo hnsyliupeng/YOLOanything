@@ -1,0 +1,13 @@
+<!DOCTYPE html><html><body><div id=r>testing</div><script>
+(async () => {
+  const el = document.getElementById('r');
+  try {
+    if (!navigator.gpu) { el.textContent = 'no-navigator-gpu secure=' + window.isSecureContext; return; }
+    const a = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+    if (!a) { el.textContent = 'no-adapter'; return; }
+    const i = a.info || {};
+    const d = await a.requestDevice();
+    el.textContent = 'OK ' + JSON.stringify({ vendor: i.vendor, arch: i.architecture, ok: !!d });
+  } catch (e) { el.textContent = 'ERR ' + e.message; }
+})();
+</script></body></html>

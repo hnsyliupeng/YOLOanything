@@ -1,0 +1,26 @@
+# ===== 运行时依赖（不纳入快照，npm install 可复现）=====
+node_modules/
+tools/package-lock.json.bak
+
+# ===== 数据集（体积大；raw 可由 scripts/fetch_data.sh 重建，processed 13s 重建）=====
+data/raw/
+data/datasets/
+!data/datasets/README.md
+
+# ===== 模型权重（关键产物用 git add -f 强制纳入）=====
+app/models/*.onnx
+!app/models/manifest.json
+
+# ===== 训练产物（best.pt 用 git add -f 纳入；中间产物不纳入）=====
+training/runs/
+*.pt
+*.pth
+!training/**/*.yaml
+
+# ===== 临时 =====
+__pycache__/
+*.pyc
+/tmp/
+.DS_Store
+*.log
+.venv/
