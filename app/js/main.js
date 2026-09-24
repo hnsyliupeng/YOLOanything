@@ -11,6 +11,10 @@ import { initLayout, updateLogCount, setMode } from './ui/layout.js';
 import { initStatusbar, setResolutionChip } from './ui/statusbar.js';
 import { toast } from './ui/toast.js';
 import { loadManifest, DetectSession, CLASS_NAMES, CLASS_COLORS, TRASH_IDS } from './core/inference.js';
+import { MediaPipeline } from './ui/media.js';
+import { DepthSession } from './core/depth.js';
+import { buildRelationGraph, sma3Enhance, graphSummary } from './core/relations.js';
+import { renderDepthOverlay } from './core/depth.js';
 
 const APP_VERSION = '0.1.0';
 
@@ -102,8 +106,17 @@ async function boot() {
       const backendOK = gpu.backend === 'webgpu';
       H.detectSession = await new DetectSession().load(state.models.detect, H.manifest, { preferWebGPU: backendOK });
       state.models.loaded.detect = true;
-      bus.emit('models:loaded', { detect: true, depth: false });
-      toast(`检测模型已加载 (${H.detectSession.backend})`, 'ok');
+      bus.emit('models:loaded', { detect: true });
+      // 深度模型（存在则加载，失败不阻塞检测）
+      try {
+        const dmeta = H.manifest.models.find(m => m.task === 'depth');
+        if (dmeta) {
+          H.depthSession = await new DepthSession().load(backendOK, `./models/${dmeta.file}`);
+          state.models.loaded.depth = true;
+          bus.emit('models:loaded', { depth: true });
+        }
+      } catch (de) { logger.warn('[Models] 深度模型加载失败(不影响检测):', de.message); }
+      toast(`模型已加载 (检测:${H.detectSession.backend}${H.depthSession ? ' / 深度:' + H.depthSession.backend : ''})`, 'ok');
     } catch (e) {
       logger.error('[Models] 加载失败:', e.message);
       toast('模型加载失败: ' + e.message, 'err', 4200);
@@ -178,6 +191,85 @@ async function boot() {
     errors: errs,
     adapter: gpu.adapterInfo,
   });
+
+  /* ── 媒体管线（子任务6） ── */
+  const media = new MediaPipeline();
+  await media.init();
+  H.media = media;
+  bus.on('media:clear', () => media.clear());
+
+  /* ── 推理执行（图像模式完整流程：检测→深度→关系→渲染→统计） ── */
+  bus.on('infer:run', async () => {
+    if (!media.bitmap || !H.detectSession) {
+      toast(!media.bitmap ? '请先打开图像' : '请先加载模型', 'warn');
+      return;
+    }
+    const btnRun = document.getElementById('btn-run');
+    btnRun.disabled = true;
+    try {
+      const result = await H.detectSession.detect(media.bitmap, {
+        conf: state.thresholds.conf, iou: state.thresholds.iou, segOn: state.flags.seg,
+      });
+      let dets = result.dets;
+      // SMA3 关系增强（子任务5）
+      let graph = null, summary = null;
+      if (state.flags.relations && dets.length > 1) {
+        graph = buildRelationGraph(dets, result.srcW, result.srcH);
+        dets = sma3Enhance(dets, graph).filter(d => d.score >= state.thresholds.conf);
+        summary = graphSummary(graph);
+      }
+      // 深度估计（子任务4，模型加载后可用）
+      let depthRes = null;
+      if (state.flags.depth && H.depthSession) {
+        depthRes = await H.depthSession.estimate(media.bitmap);
+        dets.forEach(d => {
+          d.depth = H.depthSession.depthAt(depthRes, d.box);
+        });
+      }
+      H.lastResult = { ...result, dets, graph, summary, depthRes };
+      // 渲染
+      media.display(media.bitmap);          // 底图重绘
+      H.renderDetections({ ...result, dets }, state.flags.seg ? (await H.detectSession.buildMasks(result, dets)) : null, result.srcW, result.srcH);
+      if (depthRes && state.flags.depth) renderDepthOverlay(depthRes, media.bitmap);
+      // 统计与UI
+      updateStats(dets, summary);
+      bus.emit('infer:done', { ms: result.timing.total });
+      bus.emit('state:detections', state);
+    } catch (e) {
+      logger.error('[Infer] 推理失败:', e.message);
+      toast('推理失败: ' + e.message, 'err');
+    } finally {
+      btnRun.disabled = false;
+    }
+  });
+
+  /* 统计面板更新 */
+  function updateStats(dets, summary) {
+    const trashN = dets.filter(d => d.isTrash).length;
+    const classes = new Set(dets.map(d => d.cls));
+    document.getElementById('stat-count').textContent = dets.length;
+    document.getElementById('stat-classes').textContent = classes.size;
+    const depthVals = dets.filter(d => d.depth != null).map(d => d.depth);
+    document.getElementById('stat-avgdepth').textContent = depthVals.length
+      ? (depthVals.reduce((a, b) => a + b, 0) / depthVals.length).toFixed(2) : '--';
+    const rel = document.getElementById('depth-info');
+    if (summary) {
+      rel.innerHTML = `关系图: ${summary.nNodes}节点 ${summary.nEdges}边（语义${summary.nSemantic}/空间${summary.nSpatial}）· 同类簇${summary.clusters}` +
+        (summary.top.length ? `<br/>` + summary.top.map(t => `· ${t}`).join('<br/>') : '');
+    }
+    // 类别表
+    const byCls = new Map();
+    dets.forEach(d => byCls.set(d.cls, (byCls.get(d.cls) || 0) + 1));
+    const maxN = Math.max(1, ...byCls.values());
+    const tbl = document.getElementById('class-table');
+    tbl.innerHTML = byCls.size ? [...byCls.entries()].sort((a, b) => b[1] - a[1]).map(([cls, n]) => `
+      <div class="class-row">
+        <span class="class-dot" style="background:rgb(${CLASS_COLORS[cls].join(',')})"></span>
+        <span class="class-name">${CLASS_NAMES[cls]}${TRASH_IDS.includes(cls) ? ' ♻' : ''}</span>
+        <span class="class-count">${n}</span>
+        <div class="class-bar"><i style="width:${(n / maxN * 100).toFixed(0)}%;background:rgb(${CLASS_COLORS[cls].join(',')})"></i></div>
+      </div>`).join('') : '<div class="hint">无检出</div>';
+  }
 
   /* 清空按钮行为（首帧实现：重置提示与覆盖层） */
   bus.on('media:clear', () => {
