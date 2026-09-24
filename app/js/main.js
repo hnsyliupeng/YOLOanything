@@ -39,6 +39,17 @@ async function boot() {
   await gpu.enrichInfo();
   const canvas = document.getElementById('view-canvas');
   const init = await gpu.init(canvas);
+  /* 软渲染适配器（SwiftShader/llvmpipe 系）：WebGPU present 静默失败（画面全黑），
+     渲染器直接走 Canvas2D；推理经 backendOK 联动走 WASM EP（软渲染下 webgpu EP 反而更慢更不稳） */
+  const _swRe = /swiftshader|llvmpipe|softpipe|software|swift shader/i;
+  const _swInfo = `${gpu.adapterInfo?.vendor ?? ''} ${gpu.adapterInfo?.architecture ?? ''} ${gpu.adapterInfo?.description ?? ''}`;
+  if (init.backend === 'webgpu' && _swRe.test(_swInfo)) {
+    gpu.backend = 'canvas2d';
+    init.backend = 'canvas2d';
+    logger.warn('[Boot] 检测到软渲染适配器(无硬件GPU)，渲染器已自动切换 Canvas2D、推理走 WASM');
+    const hint = document.querySelector('#viewport-hint .hint-text');
+    if (hint) hint.textContent = '软渲染环境：自检图案以 Canvas2D 绘制。点「示例素材」立即体验检测。';
+  }
   setState({ backend: init.backend }, 'backend');
   bus.emit('gpu:ready', { backend: init.backend, summary: gpu.summary() });
   logger.ok(`[Boot] 渲染后端: ${init.backend === 'webgpu' ? 'WebGPU ✓' : 'Canvas2D（回退）'}`);
@@ -408,6 +419,25 @@ async function boot() {
   });
 
   console.log('[Boot] 应用就绪');
+
+  /* 开屏自动演示（navigator.webdriver 的自动化测试除外）：加载模型 → 示例素材 → 单次推理。
+     让用户打开页面即见"检测+深度"效果，而非空视口；全程非阻塞，失败静默保留手动路径。 */
+  if (!navigator.webdriver) {
+    setTimeout(async () => {
+      try {
+        const $ = (id) => document.getElementById(id);
+        const wait = (cond, ms, step = 400) => (async () => { const t0 = Date.now(); while (!cond() && Date.now() - t0 < ms) await new Promise(r => setTimeout(r, step)); return cond(); })();
+        if (!state.models.loaded.detect) $('btn-load-models')?.click();
+        if (!(await wait(() => state.models.loaded.detect, 120000))) return logger.warn('[Demo] 模型加载超时，自动演示跳过');
+        if (!window.__AQUASCAN__.media?.bitmap) {
+          $('btn-sample')?.click();
+          if (!(await wait(() => window.__AQUASCAN__.media?.bitmap, 15000))) return logger.warn('[Demo] 示例素材加载失败，自动演示跳过');
+        }
+        $('btn-run')?.click();
+        logger.ok('[Demo] 开屏自动演示已执行（模型+示例+单次推理）');
+      } catch (e) { logger.warn('[Demo] 自动演示跳过:', e?.message || e); }
+    }, 600);
+  }
 }
 
 /* 测试/调试句柄 */

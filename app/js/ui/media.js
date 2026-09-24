@@ -60,11 +60,12 @@ export class MediaPipeline {
   }
 
   async loadSample() {
+    /* 确定性首选：有真实目标(鱼+ROV)、融合模型有检出的帧，保证示例即见效果；其余为备选池 */
     const samples = [
-      'vid_000109_frame0000037.jpg', 'vid_000157_frame0000005.jpg',
+      'vid_000438_frame0000032.jpg', 'vid_000109_frame0000037.jpg',
       'vid_000264_frame0000022.jpg', 'vid_000532_frame0000173.jpg',
     ];
-    const pick = samples[Math.floor(Math.random() * samples.length)];
+    const pick = Math.random() < 0.8 ? samples[0] : samples[1 + Math.floor(Math.random() * (samples.length - 1))];
     const r = await fetch(`./assets/samples/${pick}`);
     await this.loadBitmap(await r.blob(), pick);
   }

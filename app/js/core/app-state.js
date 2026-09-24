@@ -8,8 +8,8 @@ const DEFAULTS = Object.freeze({
   mode: 'image',                    // image | video | camera | train
   backend: null,                    // webgpu | canvas2d
   models: {
-    detect: 'yolo26n-water-640',
-    depth: 'dav2-small-web',
+    detect: 'yolo26n-water-fused-320',
+    depth: 'dav2-lite-256',
     loaded: { detect: false, depth: false },
   },
   thresholds: { conf: 0.25, iou: 0.45 },
