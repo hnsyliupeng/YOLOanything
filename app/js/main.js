@@ -199,6 +199,13 @@ async function boot() {
   H.media = media;
   bus.on('media:clear', () => media.clear());
 
+  /* ── ROI 区域选择（子任务6）── */
+  initROI();
+
+  /* ── 预警 + 记录导出（子任务8）── */
+  initAlerts();
+  initExports();
+
   /* ── 推理执行（图像模式完整流程：检测→深度→关系→渲染→统计） ── */
   bus.on('infer:run', async () => {
     if (!media.bitmap || !H.detectSession) {
@@ -228,6 +235,7 @@ async function boot() {
         });
       }
       // ROI 区域过滤（子任务6）：仅保留中心落在 ROI 内的目标
+      H.lastDetsAll = dets;               // ROI 重过滤的完整基线（过滤前）
       if (state.region) {
         const R = state.region;
         const inR = (d) => {
@@ -246,6 +254,13 @@ async function boot() {
       if (depthRes && state.flags.depth) renderDepthOverlay(depthRes, media.bitmap);
       // 统计与UI
       updateStats(dets, summary);
+      evaluateAlerts(dets, result);
+      addRecord({
+        ts: new Date().toISOString(), mode: state.mode,
+        model: state.models.detect, ms: +result.timing.total.toFixed(1),
+        region: state.region ? { ...state.region } : null,
+        dets: dets.map(d => ({ cls: d.cls, name: CLASS_NAMES[d.cls], score: d.score, box: d.box.map(v => +v.toFixed(4)), depth: d.depth ?? null, clusterSize: d.clusterSize ?? null })),
+      });
       bus.emit('infer:done', { ms: result.timing.total });
       bus.emit('state:detections', state);
     } catch (e) {
@@ -254,6 +269,28 @@ async function boot() {
     } finally {
       btnRun.disabled = false;
     }
+  });
+
+  /* ROI 变更：用缓存结果即时重过滤（不重新推理） */
+  bus.on('roi:change', async () => {
+    if (!H.lastResult || !H.lastDetsAll) { paintROI(); return; }
+    try {
+      let dets = H.lastDetsAll;
+      if (state.region) {
+        const R = state.region;
+        dets = dets.filter((d) => {
+          const cx = (d.box[0] + d.box[2] / 2) / H.lastResult.srcW;
+          const cy = (d.box[1] + d.box[3] / 2) / H.lastResult.srcH;
+          return cx >= R.x && cx <= R.x + R.w && cy >= R.y && cy <= R.y + R.h;
+        });
+      }
+      H.lastResult = { ...H.lastResult, dets };
+      H.renderDetections({ ...H.lastResult }, state.flags.seg ? await H.detectSession.buildMasks(H.lastResult, dets) : null, H.lastResult.srcW, H.lastResult.srcH);
+      if (H.lastResult.depthRes && state.flags.depth) renderDepthOverlay(H.lastResult.depthRes, H.media.bitmap);
+      updateStats(dets, H.lastResult.summary);
+      evaluateAlerts(dets, H.lastResult);
+      bus.emit('state:detections', state);
+    } catch (e) { logger.warn('[ROI] 重过滤失败:', e.message); }
   });
 
   /* 统计面板更新 */
