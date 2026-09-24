@@ -25,49 +25,29 @@
    "note": "浏览器直连 HuggingFace 加载；沙箱/墙内环境不可用，用 dav2-lite-256 替代"
   },
   {
-   "id": "yolo26n-water-640",
-   "file": "yolo26n-seg-640.onnx",
-   "arch": "yolo26n-seg",
-   "task": "segment",
-   "imgsz": 640,
+   "id": "dav2-lite-256",
+   "file": "depth-lite-256.onnx",
+   "arch": "depth-lite (DAV2-style ViT-tiny+DPT)",
+   "task": "depth",
+   "imgsz": 256,
    "outputs": [
     [
      1,
-     300,
-     38
-    ],
-    [
      1,
-     32,
-     160,
-     160
+     256,
+     256
     ]
    ],
-   "input": "1x3x640x640 NCHW RGB 0-1",
+   "input": "1x3x256x256 NCHW RGB 0-1",
    "end2end_nms_free": true,
-   "max_det": 300,
-   "classes": 16,
-   "class_names": [
-    "rov",
-    "plant",
-    "animal_fish",
-    "animal_starfish",
-    "animal_shells",
-    "animal_crab",
-    "animal_eel",
-    "animal_etc",
-    "trash_etc",
-    "trash_fabric",
-    "trash_fishing_gear",
-    "trash_metal",
-    "trash_paper",
-    "trash_plastic",
-    "trash_rubber",
-    "trash_wood"
-   ],
-   "sha256_8": "9f5670d1",
-   "size_mb": 11.09,
-   "ort_cpu_ms": 104.0
+   "classes": 0,
+   "class_names": [],
+   "params_m": 1.11,
+   "trained_on": "真实ROV帧物理复合(真实实例+标签同步迁移, gen_real_composite_depth)",
+   "official_dav2_hf": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.onnx",
+   "sha256_8": "b2cc8b6b",
+   "size_mb": 0.35,
+   "ort_cpu_ms": 8.6
   },
   {
    "id": "yolo26n-water-320",
@@ -110,35 +90,55 @@
     "trash_rubber",
     "trash_wood"
    ],
-   "sha256_8": "0697b82e",
+   "sha256_8": "acafe6f8",
    "size_mb": 10.97,
-   "ort_cpu_ms": 30.1
+   "ort_cpu_ms": 30.7
   },
   {
-   "id": "dav2-lite-256",
-   "file": "depth-lite-256.onnx",
-   "arch": "depth-lite (DAV2-style ViT-tiny+DPT)",
-   "task": "depth",
-   "imgsz": 256,
+   "id": "yolo26n-water-640",
+   "file": "yolo26n-seg-640.onnx",
+   "arch": "yolo26n-seg",
+   "task": "segment",
+   "imgsz": 640,
    "outputs": [
     [
      1,
+     300,
+     38
+    ],
+    [
      1,
-     256,
-     256
+     32,
+     160,
+     160
     ]
    ],
-   "input": "1x3x256x256 NCHW RGB 0-1",
+   "input": "1x3x640x640 NCHW RGB 0-1",
    "end2end_nms_free": true,
-   "classes": 0,
-   "class_names": [],
-   "params_m": 1.11,
-   "trained_on": "真实ROV帧物理复合(真实实例+标签同步迁移, gen_real_composite_depth)",
-   "official_dav2_hf": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.onnx",
-   "sha256_8": "b2cc8b6b",
-   "size_mb": 0.35,
-   "ort_cpu_ms": 8.6
+   "max_det": 300,
+   "classes": 16,
+   "class_names": [
+    "rov",
+    "plant",
+    "animal_fish",
+    "animal_starfish",
+    "animal_shells",
+    "animal_crab",
+    "animal_eel",
+    "animal_etc",
+    "trash_etc",
+    "trash_fabric",
+    "trash_fishing_gear",
+    "trash_metal",
+    "trash_paper",
+    "trash_plastic",
+    "trash_rubber",
+    "trash_wood"
+   ],
+   "sha256_8": "ba6d12db",
+   "size_mb": 11.09,
+   "ort_cpu_ms": 120.0
   }
  ],
- "updated": "2026-09-24 06:33:37"
+ "updated": "2026-09-24 14:53:21"
 }
