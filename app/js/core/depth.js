@@ -91,9 +91,11 @@ export class DepthSession {
   }
 }
 
-/** 深度伪彩色叠加渲染（半透明覆盖在视口右下角小图 + 可选全屏模式） */
+/** 深度伪彩色叠加渲染（半透明覆盖在视口右下角小图 + 可选全屏模式）
+ *  绘制目标：#media-canvas（媒体专用2d画布，与 view-canvas 的 WebGPU context 隔离）
+ */
 export function renderDepthOverlay(res, bitmap, { fullscreen = false } = {}) {
-  const vc = document.getElementById('view-canvas');
+  const vc = document.getElementById('media-canvas') || document.getElementById('view-canvas');
   const { small, w, h } = res;
   // 小图上色
   const tmp = (globalThis.__depthTmp ??= document.createElement('canvas'));

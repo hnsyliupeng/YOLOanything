@@ -83,9 +83,18 @@ export class MediaPipeline {
     logger.ok(`[Media] ${name} ${bmp.width}×${bmp.height}`);
   }
 
-  /** 将 bitmap 画到主画布（保持比例，画布尺寸=媒体尺寸） */
+  /** 将 bitmap 画到媒体画布（保持比例，画布尺寸=媒体尺寸）
+   *  用独立 #media-canvas：view-canvas 归 renderer(WebGPU context) 专用，二者不可混用
+   */
   display(bmp) {
-    const vc = document.getElementById('view-canvas');
+    const vc = this.mediaCanvas ??= (() => {
+      const c = document.createElement('canvas');
+      c.id = 'media-canvas';
+      const ov = document.getElementById('overlay-canvas');
+      ov.parentNode.insertBefore(c, ov);
+      return c;
+    })();
+    document.getElementById('canvas-stack').classList.add('media-active');
     const ov = document.getElementById('overlay-canvas');
     const maxW = Math.min(1280, bmp.width);
     const scale = Math.min(maxW / bmp.width, 720 / bmp.height, 1);
@@ -104,18 +113,23 @@ export class MediaPipeline {
     this.bitmap?.close?.();
     this.bitmap = null;
     this.kind = null;
-    bus.emit('media:clear');
+    document.getElementById('canvas-stack')?.classList.remove('media-active');
+    if (this.mediaCanvas) this.mediaCanvas.getContext('2d').clearRect(0, 0, this.mediaCanvas.width, this.mediaCanvas.height);
+    // 注意：此处不再 emit('media:clear')——本方法就是该事件的处理器，回发会无限递归
     $('#btn-run').setAttribute('disabled', '');
     $('#btn-snapshot').setAttribute('disabled', '');
   }
 
   snapshot() {
-    const vc = document.getElementById('view-canvas');
+    const vc = document.getElementById('media-canvas') || document.getElementById('view-canvas');
     const ov = document.getElementById('overlay-canvas');
+    const roi = document.getElementById('roi-canvas');
     const out = document.createElement('canvas');
     out.width = vc.width; out.height = vc.height;
-    out.getContext('2d').drawImage(vc, 0, 0);
-    out.getContext('2d').drawImage(ov, 0, 0);
+    const g = out.getContext('2d');
+    g.drawImage(vc, 0, 0);
+    g.drawImage(ov, 0, 0);
+    if (roi && roi.width === vc.width) g.drawImage(roi, 0, 0);   // ROI 标注一并入快照
     out.toBlob((b) => {
       const a = document.createElement('a');
       a.href = URL.createObjectURL(b);

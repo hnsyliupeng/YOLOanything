@@ -185,6 +185,7 @@ export class Renderer {
   }
 
   resize() {
+    if (this.mediaHold) return;   // 媒体模式：画布尺寸由 MediaPipeline 接管，renderer 不抢
     const rect = this.canvas.parentElement.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, this._dprCap);
     // 保持 16:9 基准，尽量占满可用区域；抽屉模式下额外以窗口宽度兜底

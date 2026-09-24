@@ -384,3 +384,7 @@ input[type="range"]::-webkit-slider-thumb {
   0%, 100% { box-shadow: inset 0 0 0 3px transparent; }
   50%      { box-shadow: inset 0 0 0 3px var(--err); }
 }
+
+/* ── 子任务6/7：媒体专用画布（view-canvas 归 renderer，媒体激活时隐藏） ── */
+#media-canvas { position: absolute; z-index: 1; }
+#canvas-stack.media-active #view-canvas { display: none; }

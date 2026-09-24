@@ -51,13 +51,13 @@ async function boot() {
   renderer.start();
   setResolutionChip(canvas.width, canvas.height);
 
-  /* 视口尺寸变化：ResizeObserver + debounce */
+  /* 视口尺寸变化：ResizeObserver + debounce（媒体激活时由 MediaPipeline 接管尺寸） */
   let roTimer = 0;
   const ro = new ResizeObserver(() => {
     clearTimeout(roTimer);
     roTimer = setTimeout(() => {
-      renderer.resize();
-      setResolutionChip(canvas.width, canvas.height);
+      if (H.media?.bitmap) H.media.display(H.media.bitmap);
+      else { renderer.resize(); setResolutionChip(canvas.width, canvas.height); }
     }, 80);
   });
   ro.observe(document.getElementById('canvas-stack'));
@@ -201,6 +201,14 @@ async function boot() {
 
   /* ── ROI 区域选择（子任务6）── */
   initROI();
+
+  /* 媒体激活 ↔ renderer 画布让渡 */
+  bus.on('media:loaded', () => { renderer.mediaHold = true; });
+  bus.on('media:clear', () => {
+    renderer.mediaHold = false;
+    renderer.resize();
+    setResolutionChip(canvas.width, canvas.height);
+  });
 
   /* ── 预警 + 记录导出（子任务8）── */
   initAlerts();
