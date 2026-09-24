@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 P=.venv/bin/python
 done_epochs() { [ -f "training/runs/$1/results.csv" ] && awk 'END{print NR-1}' "training/runs/$1/results.csv" || echo 0; }
 # checkpoint 完整性校验（watcher 可能快照到半写状态的 last.pt）
-pt_ok() { $P -c "import torch,sys; torch.load(sys.argv[1], map_location='cpu', weights_only=True)" "$1" >/dev/null 2>&1; }
+pt_ok() { $P -c "import torch,sys; torch.load(sys.argv[1], map_location='cpu', weights_only=False)" "$1" >/dev/null 2>&1; }
 
 R7E=$(done_epochs r7); R8E=$(done_epochs r8)
 echo "═══ 断点侦测: r7=${R7E}/6ep r8=${R8E}/6ep ═══"
