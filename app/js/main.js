@@ -18,6 +18,7 @@ import { renderDepthOverlay } from './core/depth.js';
 import { initROI, paint as paintROI } from './ui/roi.js';
 import { initAlerts, evaluateAlerts } from './ui/alerts.js';
 import { initExports, addRecord } from './ui/exports.js';
+import { composeFusedSource, depthGate } from './core/fusion.js';
 
 const APP_VERSION = '0.1.0';
 
@@ -118,6 +119,30 @@ async function boot() {
   H.lastResult = null;
   H.__loadManifest = loadManifest;
   H.__DetectSession = DetectSession;
+
+  /* 模型选择器动态填充：以 manifest 为准（含融合模型×Depth 标注） */
+  function populateModelSelectors(manifest) {
+    const fill = (sel, items, cur) => {
+      if (!sel) return;
+      sel.innerHTML = '';
+      for (const m of items) {
+        const o = document.createElement('option');
+        o.value = m.id;
+        o.textContent = m.label || m.name || m.id;
+        if (m.id === cur) o.selected = true;
+        sel.appendChild(o);
+      }
+      if (cur && !items.some(m => m.id === cur)) sel.value = items[0]?.id ?? '';
+    };
+    const detItems = manifest.models.filter(m => m.task === 'detect').map(m => ({
+      id: m.id,
+      label: `${m.name || m.id}${m.preprocess === 'yds' ? ' ×Depth 融合' : ''}${String(m.input || '').includes('320') || m.input_size === 320 ? ' (320·快速)' : String(m.input || '').includes('640') || m.input_size === 640 ? ' (640)' : ''}`,
+    }));
+    const depItems = manifest.models.filter(m => m.task === 'depth').map(m => ({ id: m.id, label: m.name || m.id }));
+    fill(document.getElementById('sel-detect-model'), detItems, state.models.detect);
+    fill(document.getElementById('sel-depth-model'), depItems, state.models.depth);
+    if (detItems.some(m => m.id === state.models.detect)) state.models.detect = document.getElementById('sel-detect-model').value;
+  }
   const btnLoad = document.getElementById('btn-load-models');
   btnLoad.removeAttribute('disabled');
   btnLoad.addEventListener('click', async () => {
@@ -125,6 +150,7 @@ async function boot() {
     btnLoad.textContent = '加载中…';
     try {
       H.manifest = await loadManifest();
+      populateModelSelectors(H.manifest);
       const backendOK = gpu.backend === 'webgpu';
       H.detectSession = await new DetectSession().load(state.models.detect, H.manifest, { preferWebGPU: backendOK });
       state.models.loaded.detect = true;
@@ -256,25 +282,30 @@ async function boot() {
     const btnRun = document.getElementById('btn-run');
     btnRun.disabled = true;
     try {
-      const result = await H.detectSession.detect(media.bitmap, {
+      /* ── 多模态（YOLO26-seg × Depth）──
+         融合模型(preprocess==='yds')：先深度估计 → 合成 Y-D-S 输入 → 检测；
+         RGB 模型：检测后深度门控评分融合（depthGate）。 */
+      const fused = H.detectSession.meta?.preprocess === 'yds';
+      let depthRes = null;
+      if (fused) {
+        if (!H.depthSession) throw new Error('融合模型需要先加载深度模型');
+        depthRes = await H.depthSession.estimate(media.bitmap);
+      }
+      const detectSource = fused
+        ? composeFusedSource(media.bitmap, depthRes)
+        : media.bitmap;
+      const result = await H.detectSession.detect(detectSource, {
         conf: state.thresholds.conf, iou: state.thresholds.iou, segOn: state.flags.seg,
       });
       let dets = result.dets;
-      // SMA3 关系增强（子任务5）
-      let graph = null, summary = null;
-      if (state.flags.relations && dets.length > 1) {
-        graph = buildRelationGraph(dets, result.srcW, result.srcH);
-        dets = sma3Enhance(dets, graph).filter(d => d.score >= state.thresholds.conf);
-        summary = graphSummary(graph);
-      }
-      // 深度估计（子任务4，模型加载后可用）
-      let depthRes = null;
-      if (state.flags.depth && H.depthSession) {
+      // 深度估计（RGB 模型路径：检测后估计 + 门控融合）
+      if (!fused && state.flags.depth && H.depthSession) {
         depthRes = await H.depthSession.estimate(media.bitmap);
-        dets.forEach(d => {
-          d.depth = H.depthSession.depthAt(depthRes, d.box);
-        });
+        depthGate(dets, depthRes, result.srcW, result.srcH);
       }
+      dets.forEach(d => {
+        d.depth = H.depthSession?.depthAt(depthRes, d.box) ?? null;
+      });
       // ROI 区域过滤（子任务6）：仅保留中心落在 ROI 内的目标
       H.lastDetsAll = dets;               // ROI 重过滤的完整基线（过滤前）
       if (state.region) {
