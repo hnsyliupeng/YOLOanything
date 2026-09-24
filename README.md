@@ -66,8 +66,8 @@ python3 scripts/server.py --port 8000 --root app
 
 | id | 任务 | 说明 | 体积 | ORT-CPU 延迟 |
 |---|---|---|---|---|
-| `yolo26n-water-640` | 检测+分割 | YOLO26n-seg @640 水上垃圾 16 类 | 【待填】 | 【待填】 |
-| `yolo26n-water-320` | 检测+分割 | 同上 @320（快速档） | 【待填】 | 【待填】 |
+| `yolo26n-water-640` | 检测+分割 | YOLO26n-seg @640 水上垃圾 16 类 | 10.6MB | ~1.4-1.6s（R3 期 wasm CPU 实测） |
+| `yolo26n-water-320` | 检测+分割 | 同上 @320（快速档） | 10.5MB | ~0.8-0.9s（R6 期 wasm CPU 实测 805ms@空闲） |
 | `dav2-small-int8` | 深度 | **官方 Depth-Anything-V2-Small INT8 量化（27MB，已入库，默认）** | 27.26 | 视设备 |
 | `dav2-lite-256` | 深度 | 自训 DepthLite（ViT-tiny patch16/dim128/4层 1.11M，**真实ROV帧物理复合**（背景=真实帧+物理变体，目标=真实标注实例，标签0丢失），val L1 0.0293） | 0.35 | 33ms |
 | `official_dav2_hf` | 深度 | 官方 Depth-Anything-V2-Small ONNX（浏览器直连 HuggingFace） | ~99MB | 视设备 |
@@ -91,7 +91,8 @@ python3 scripts/server.py --port 8000 --root app
 | R1（历史） | 2ep×15% @320 从零 | 0.0001 | — | 曲线在第三次沙箱重置中遗失，数字见报告 |
 | R2（历史） | 6ep×50% 续训 | 0.0321 | — | 同上 |
 | R3（历史） | 4ep×100% 热启动 | **0.0957** | 0.0974 | 历史最好；runs 产物遗失，曲线图幸存 `results/detection/三轮对比曲线.png` |
-| R6（本次） | 4ep×40% @320 SGD lr0.02 从零 | 【待填】 | 【待填】 | 短周期链式训练（train→export→eval 一条 start_process） |
+| R6（本次） | 4ep×40% @320 SGD lr0.02 从零 | 0.00472 | 0.006 | 短周期链式训练（train→export→eval 一条 start_process） |
+| R7（修正轮·进行中） | 6ep×100% @320 SGD lr0.008 合成数据续R6 | e4=**0.0452**（9.6×R6） | e4 进行中 | 回归修复：5328 全量×100% 裁幅+合成数据合规增强；e1-e4 四连上坡 |
 
 - 对比曲线：`results/detection/训练对比曲线.png`（`scripts/plot_curves.py` 动态扫描 training/runs/r*）
 - 预测可视化：`results/detection/r6_val预测可视化.png`（检测框+mask+置信度，9 张 val 样例）
