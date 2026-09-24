@@ -133,12 +133,12 @@
    "classes": 0,
    "class_names": [],
    "params_m": 1.11,
-   "trained_on": "合成水上场景(解析深度), 沙箱自训练",
+   "trained_on": "真实ROV帧物理复合(真实实例+标签同步迁移, gen_real_composite_depth)",
    "official_dav2_hf": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small/resolve/main/depth_anything_v2_vits.onnx",
-   "sha256_8": "56438e16",
+   "sha256_8": "b2cc8b6b",
    "size_mb": 0.35,
-   "ort_cpu_ms": 11.7
+   "ort_cpu_ms": 8.6
   }
  ],
- "updated": "2026-09-24 06:17:17"
+ "updated": "2026-09-24 06:33:37"
 }
