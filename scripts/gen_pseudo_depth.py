@@ -24,7 +24,7 @@ MODEL = REPO / "app" / "models" / "depth-lite-256.onnx"
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--splits", default="train,val,test")
-    ap.add_argument("--batch", type=int, default=8)
+    ap.add_argument("--batch", type=int, default=1)  # torch2.14 dynamo 导出忽略 dynamic_axes→DepthLite ONNX 固定 batch=1
     args = ap.parse_args()
 
     import onnxruntime as ort
