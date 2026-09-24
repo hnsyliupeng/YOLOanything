@@ -116,21 +116,23 @@ tools/               测试工具链（package.json、extract-chromium.mjs、fon
 |---|---|---|---|
 | ① 骨架+WebGPU | 18 轮循环，终态 53/53 断言 | `docs/reports/子任务1_测试报告.md` | `docs/screenshots/subtask1/` |
 | ② 数据集 | 3 轮，26/26 断言，5328/502/178/1204 | `docs/reports/子任务2_测试报告.md` | 预览图 |
-| ③ YOLO26 训练+ONNX/WebGPU 导出 | 进行中（R6） | 【待填】 | 【待填】 |
-| ④ 深度集成 | 双轨方案已定案，自训模型产物【待填】 | 【待填】 | 【待填】 |
-| ⑤ RelateAnything+SMA3 | 前端完成，联调【待填】 | 【待填】 | 【待填】 |
-| ⑥ 图像全功能 | 前端完成，联调【待填】 | 【待填】 | 【待填】 |
+| ③ YOLO26 训练+导出 | R4 复验 16/16 浏览器断言；R6 从零短训不足（mAP50 0.0047，用户证图）→ **修正轮 R7 热启动续训 + R8 融合**进行中 | `docs/reports/子任务3_测试报告.md` · `subtask3_round4.md` · `多模态修正轮_测试报告.md` | `docs/screenshots/subtask3/` |
+| ④ 深度集成 | 双轨：官方 DAV2 INT8 99MB 网页版 + DepthLite 自训（**合规重建**：真实ROV帧物理复合，标签0丢失，val L1 0.0293） | `docs/reports/子任务4_测试报告.md`（含合规修正节） | `results/depth/真实复合预览.png` |
+| ⑤ RelateAnything+SMA3 | 36边3簇、关系增强10目标（前端联调过） | `docs/reports/子任务5_测试报告.md` | `docs/screenshots/subtask5/` |
+| ⑥ 图像全功能 | ROI 11→0 过滤+检测/分割/深度/统计全功能 | `docs/reports/子任务6_测试报告.md` | `docs/screenshots/subtask6/` |
 | ⑦ 视频+摄像头 | 视频模式自动化 5/5；摄像头按用户指令不测试 | `docs/reports/子任务7_测试报告.md` | `docs/screenshots/subtask7/` |
-| ⑧ 预警/记录/高级 | alerts/exports 完成，联调【待填】 | 【待填】 | 【待填】 |
-| ⑨ 训练面板+联调 | train.js 完成 | 【待填】 | 【待填】 |
+| ⑧ 预警/记录/高级 | 预警触发（密度/大目标/声音）+ JSON/CSV 导出验证 | `docs/reports/子任务8_测试报告.md` | `docs/screenshots/subtask8/` |
+| ⑨ 训练面板+整体联调 | train.js 面板（限高）+全功能端到端 | `docs/reports/子任务9_测试报告.md` | `docs/screenshots/subtask9/` |
 
 ## ⚠️ 已知限制
 
 1. **摄像头不再测试**：摄像头功能已完整实现；按用户指令（2026-09-24）摄像头项已从一切测试计划中移除，仅保留代码与 UI 入口，不参与验收。
 2. **官方 DAV2 权重被墙**：沙箱内不可下载，采用用户浏览器直连 HF 的方式。
-3. **沙箱 CPU 训练**：只能短周期小规模试跑（~50 分钟链式），R6 mAP50=0.0047（从零4ep）属预期；历史最好 r3 热启动 0.0957；
-   高精度模型请用 `scripts/train_gpu.yaml` 在用户 GPU 上训练后按 manifest 格式接入。
-4. **深度模型为合成数据自训**：真实场景泛化有限，可切换 HF 官方 DAV2 获得更好效果。
+3. **沙箱 CPU 训练**：只能短周期小规模试跑；R6 从零 4ep mAP50=0.0047 属训练不足（用户指出后进入修正轮：
+   R7 热启动续训 + R8 Y-D-S 融合重训，断点续跑链+watcher 抗沙箱重置）；高精度模型请用 `scripts/train_gpu.yaml`
+   在用户 GPU 上训练后按 manifest 格式接入。
+4. **DepthLite 训练数据合规**：现用 real_depth（背景=真实ROV帧+物理变体、目标=真实标注实例、标签同步迁移0丢失）；
+   旧程序化假场景已废弃删除（历史见子任务4报告）。跨域泛化仍有限，可切换 HF 官方 DAV2。
 
 ## 🔧 环境自愈（沙箱重置后一键重建）
 
