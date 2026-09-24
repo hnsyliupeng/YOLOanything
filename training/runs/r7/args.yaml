@@ -1,8 +1,8 @@
 task: segment
 mode: train
-model: training/runs/r6/weights/best.pt
+model: training/runs/r7/weights/last.pt
 data: /home/user/YOLOanything/data/datasets/water_trash/dataset.yaml
-epochs: 6
+epochs: 5
 time: null
 patience: 10
 batch: 8
