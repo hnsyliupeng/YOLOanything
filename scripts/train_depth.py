@@ -168,6 +168,17 @@ def main():
     torch.onnx.export(model, dummy, onnx_path, opset_version=13,
                       input_names=["images"], output_names=["depth"],
                       dynamic_axes={"images": {0: "batch"}, "depth": {0: "batch"}})
+    # torch≥2.14 dynamo 导出会把大张量外置为 .onnx.data——必须内联为自包含
+    # （否则 shutil.copy2 只拷主文件，浏览器/链 ORT 加载即崩，63de631 曾踩此坑）
+    import onnx as _onnx
+    from onnx.external_data_helper import convert_model_from_external_data as _inline
+    try:
+        _m = _onnx.load(str(onnx_path))
+        _inline(_m)
+        _onnx.save(_m, str(onnx_path))
+        print("[depth] ONNX 外部权重已内联（自包含）")
+    except Exception as e:
+        print(f"[depth] ONNX 内联跳过（可能本就自包含）: {e}")
     import onnxruntime as ort
     sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
     probe, _ = load_batch(Xva[:1])
