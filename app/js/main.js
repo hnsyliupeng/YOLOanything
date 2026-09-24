@@ -218,6 +218,10 @@ async function boot() {
   const { initVideo } = await import('./ui/video.js');
   await initVideo();
 
+  /* ── 训练面板（子任务9）── */
+  const { initTrain } = await import('./ui/train.js');
+  initTrain();
+
   /* ── 推理执行（图像模式完整流程：检测→深度→关系→渲染→统计） ── */
   bus.on('infer:run', async () => {
     if (!media.bitmap || !H.detectSession) {

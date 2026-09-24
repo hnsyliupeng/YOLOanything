@@ -56,9 +56,11 @@ def main():
             frac = float(a.get("fraction", "1.0"))
         except ValueError:
             frac = 1.0
-        label = (f"R{re.search(r'r(\\d+)', d.name).group(1)}: "
+        rnum = re.search(r"r(\d+)", d.name).group(1)
+        opt = a.get("optimizer", "")
+        label = (f"R{rnum}: "
                  f"{a.get('epochs', '?')}ep×{frac * 100:.0f}%@{a.get('imgsz', '?')}"
-                 + (f" {a.get('optimizer', '')}" if a.get("optimizer", "") not in ("", "auto") else ""))
+                 + (f" {opt}" if opt not in ("", "auto") else ""))
         rounds.append(dict(dir=d, hdr=hdr, rows=rows, label=label))
 
     if not rounds:
@@ -113,6 +115,41 @@ def main():
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=115)
     print("✅", out)
+
+    # ── 同步产出 app/training-history.json（训练面板 fetch 用） ──
+    hist = {
+        "generatedAt": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
+        "rounds": [],
+    }
+    for i, r in enumerate(rounds):
+        a = read_args(r["dir"])
+        col = {h: j for j, h in enumerate(r["hdr"])}
+        get = lambda key: [float(row[col[key]]) for row in r["rows"] if key in col]
+        try:
+            frac = float(a.get("fraction", "1.0"))
+        except ValueError:
+            frac = 1.0
+        box50, mask50 = get("metrics/mAP50(B)"), get("metrics/mAP50(M)")
+        hist["rounds"].append({
+            "id": r["dir"].name,
+            "label": r["label"],
+            "epochs": int(a.get("epochs", 0) or 0),
+            "fraction": frac,
+            "imgsz": int(a.get("imgsz", 0) or 0),
+            "optimizer": a.get("optimizer", ""),
+            "lr0": a.get("lr0", ""),
+            "finalBox50": round(box50[-1], 6) if box50 else None,
+            "finalMask50": round(mask50[-1], 6) if mask50 else None,
+            "curve": {
+                "epoch": [int(row[col["epoch"]]) + 1 for row in r["rows"]],
+                "box50": [round(v, 6) for v in box50],
+                "mask50": [round(v, 6) for v in mask50],
+            },
+        })
+    hist_out = REPO / "app" / "training-history.json"
+    hist_out.write_text(json.dumps(hist, ensure_ascii=False, indent=1))
+    print("✅", hist_out)
+
     print("\n| 轮次 | box mAP50 | mask mAP50 |")
     print("|---|---|---|")
     for label, b, m in summary:
