@@ -69,7 +69,7 @@ python3 scripts/server.py --port 8000 --root app
 | `yolo26n-water-640` | 检测+分割 | YOLO26n-seg @640 水上垃圾 16 类 | 【待填】 | 【待填】 |
 | `yolo26n-water-320` | 检测+分割 | 同上 @320（快速档） | 【待填】 | 【待填】 |
 | `dav2-small-int8` | 深度 | **官方 Depth-Anything-V2-Small INT8 量化（27MB，已入库，默认）** | 27.26 | 视设备 |
-| `dav2-lite-256` | 深度 | 自训 DepthLite（DAV2 风格 ViT-tiny+DPT，合成水上场景解析深度） | 【待填】 | 【待填】 |
+| `dav2-lite-256` | 深度 | 自训 DepthLite（ViT-tiny patch16/dim128/4层 1.11M，合成水上场景，val L1 0.0223） | 0.35 | 33ms |
 | `official_dav2_hf` | 深度 | 官方 Depth-Anything-V2-Small ONNX（浏览器直连 HuggingFace） | ~99MB | 视设备 |
 
 > 官方 DAV2 权重最终经 GitHub 第三方仓库（rydersd/ill-tool）直取 INT8 量化版入库（sha256_8=01aa7a23，27.26MB）；
@@ -125,7 +125,7 @@ tools/               测试工具链（package.json、extract-chromium.mjs、fon
 
 1. **沙箱无摄像头**：摄像头功能已完整实现，沙箱内不实测（用户提供环境验证）。
 2. **官方 DAV2 权重被墙**：沙箱内不可下载，采用用户浏览器直连 HF 的方式。
-3. **沙箱 CPU 训练**：只能短周期小规模试跑（~30 分钟内），mAP 绝对值低属预期；
+3. **沙箱 CPU 训练**：只能短周期小规模试跑（~50 分钟链式），R6 mAP50=0.0047（从零4ep）属预期；历史最好 r3 热启动 0.0957；
    高精度模型请用 `scripts/train_gpu.yaml` 在用户 GPU 上训练后按 manifest 格式接入。
 4. **深度模型为合成数据自训**：真实场景泛化有限，可切换 HF 官方 DAV2 获得更好效果。
 

@@ -423,3 +423,7 @@ input[type="range"]::-webkit-slider-thumb {
   border: 1px dashed var(--line); border-radius: 6px; padding: 5px 8px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+
+/* 训练面板内容较多：限高滚动防溢出视口 */
+#train-bar .vp-row { max-height: min(46vh, 420px); overflow-y: auto; align-items: flex-start; }
+#train-bar .tr-col { max-width: 46%; }
