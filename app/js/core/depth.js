@@ -7,7 +7,6 @@
 import { logger } from '../utils/logger.js';
 
 const ORT_BASE = './vendor/ort/';
-const INPUT = 256;
 
 /* turbo 近似色带（0=近蓝 1=远红） */
 const STOPS = [
@@ -23,9 +22,10 @@ function turbo(t) {
 }
 
 export class DepthSession {
-  constructor() { this.session = null; this.backend = null; }
+  constructor() { this.session = null; this.backend = null; this.input = 256; }
 
-  async load(preferWebGPU = true, filePath = './models/depth-lite-256.onnx') {
+  async load(preferWebGPU = true, filePath = './models/depth-lite-256.onnx', { inputSize = 256 } = {}) {
+    this.input = inputSize;
     const ort = await import(ORT_BASE + 'ort.all.bundle.min.mjs');
     this.ort = ort;
     ort.env.wasm.wasmPaths = ORT_BASE;
@@ -48,16 +48,16 @@ export class DepthSession {
     const sw = source.width ?? source.videoWidth;
     const sh = source.height ?? source.videoHeight;
     const cv = this._cv ??= document.createElement('canvas');
-    cv.width = INPUT; cv.height = INPUT;
+    cv.width = this.in; cv.height = this.in;
     const g = cv.getContext('2d', { willReadFrequently: true });
-    g.drawImage(source, 0, 0, INPUT, INPUT);
-    const px = g.getImageData(0, 0, INPUT, INPUT).data;
-    const f = new Float32Array(3 * INPUT * INPUT);
-    const plane = INPUT * INPUT;
+    g.drawImage(source, 0, 0, this.in, this.in);
+    const px = g.getImageData(0, 0, this.in, this.in).data;
+    const f = new Float32Array(3 * this.in * this.in);
+    const plane = this.in * this.in;
     for (let i = 0, j = 0; i < plane; i++, j += 4) {
       f[i] = px[j] / 255; f[i + plane] = px[j + 1] / 255; f[i + 2 * plane] = px[j + 2] / 255;
     }
-    const tensor = new this.ort.Tensor('float32', f, [1, 3, INPUT, INPUT]);
+    const tensor = new this.ort.Tensor('float32', f, [1, 3, this.in, this.in]);
     const t0 = performance.now();
     const out = await this.session.run({ [this.session.inputNames[0]]: tensor });
     const ms = performance.now() - t0;

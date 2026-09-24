@@ -9,7 +9,7 @@ const DEFAULTS = Object.freeze({
   backend: null,                    // webgpu | canvas2d
   models: {
     detect: 'yolo26n-water-640',
-    depth: 'dav2-lite-256',
+    depth: 'dav2-small-int8',
     loaded: { detect: false, depth: false },
   },
   thresholds: { conf: 0.25, iou: 0.45 },

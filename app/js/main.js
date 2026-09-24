@@ -114,7 +114,7 @@ async function boot() {
         const dmeta = H.manifest.models.find(m => m.id === dId) || H.manifest.models.find(m => m.task === 'depth');
         if (dmeta) {
           const src = dmeta.url || `./models/${dmeta.file}`;
-          H.depthSession = await new DepthSession().load(backendOK, src);
+          H.depthSession = await new DepthSession().load(backendOK, src, { inputSize: dmeta.input_size ?? 256 });
           state.models.loaded.depth = true;
           bus.emit('models:loaded', { depth: true });
         } else {

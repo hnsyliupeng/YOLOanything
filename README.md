@@ -68,11 +68,12 @@ python3 scripts/server.py --port 8000 --root app
 |---|---|---|---|---|
 | `yolo26n-water-640` | 检测+分割 | YOLO26n-seg @640 水上垃圾 16 类 | 【待填】 | 【待填】 |
 | `yolo26n-water-320` | 检测+分割 | 同上 @320（快速档） | 【待填】 | 【待填】 |
+| `dav2-small-int8` | 深度 | **官方 Depth-Anything-V2-Small INT8 量化（27MB，已入库，默认）** | 27.26 | 视设备 |
 | `dav2-lite-256` | 深度 | 自训 DepthLite（DAV2 风格 ViT-tiny+DPT，合成水上场景解析深度） | 【待填】 | 【待填】 |
 | `official_dav2_hf` | 深度 | 官方 Depth-Anything-V2-Small ONNX（浏览器直连 HuggingFace） | ~99MB | 视设备 |
 
-> 官方 DAV2 权重在 GitHub 上的分发均为 LFS 指针且 media.githubusercontent 不可达，
-> 故采用「本地自训轻量模型 + 用户端 HF 直连」双轨方案（manifest 内附 `official_dav2_hf` URL）。
+> 官方 DAV2 权重最终经 GitHub 第三方仓库（rydersd/ill-tool）直取 INT8 量化版入库（sha256_8=01aa7a23，27.26MB）；
+> 另保留「本地自训轻量模型 + 用户端 HF 直连」双轨备用方案（manifest 内附 `official_dav2_hf` URL）。
 
 ## 🗂 数据集
 
