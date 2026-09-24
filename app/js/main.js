@@ -15,6 +15,7 @@ import { MediaPipeline } from './ui/media.js';
 import { DepthSession } from './core/depth.js';
 import { buildRelationGraph, sma3Enhance, graphSummary } from './core/relations.js';
 import { renderDepthOverlay } from './core/depth.js';
+import { initROI, paint as paintROI } from './ui/roi.js';
 
 const APP_VERSION = '0.1.0';
 
@@ -225,6 +226,18 @@ async function boot() {
         dets.forEach(d => {
           d.depth = H.depthSession.depthAt(depthRes, d.box);
         });
+      }
+      // ROI 区域过滤（子任务6）：仅保留中心落在 ROI 内的目标
+      if (state.region) {
+        const R = state.region;
+        const inR = (d) => {
+          const cx = (d.box[0] + d.box[2] / 2) / result.srcW;
+          const cy = (d.box[1] + d.box[3] / 2) / result.srcH;
+          return cx >= R.x && cx <= R.x + R.w && cy >= R.y && cy <= R.y + R.h;
+        };
+        const before = dets.length;
+        dets = dets.filter(inR);
+        logger.info(`[ROI] ${before}→${dets.length}（区域 ${Math.round(R.w * 100)}%×${Math.round(R.h * 100)}%）`);
       }
       H.lastResult = { ...result, dets, graph, summary, depthRes };
       // 渲染
