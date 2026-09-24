@@ -25,7 +25,7 @@ def build_model():
     import torch.nn as nn
 
     class PatchEmbed(nn.Module):
-        def __init__(self, img_size=256, patch=8, in_ch=3, dim=192):
+        def __init__(self, img_size=256, patch=16, in_ch=3, dim=128):
             super().__init__()
             self.npatch = (img_size // patch) ** 2
             self.proj = nn.Conv2d(in_ch, dim, patch, patch)
@@ -51,9 +51,9 @@ def build_model():
 
     class DepthLite(nn.Module):
         """ViT微编码器 + DPT风格渐进上采样头。输入256x256 → 深度[0,1]"""
-        def __init__(self, img=256, dim=192, depth=6):
+        def __init__(self, img=256, dim=128, depth=4):
             super().__init__()
-            self.embed = PatchEmbed(img, 8, 3, dim)
+            self.embed = PatchEmbed(img, 16, 3, dim)
             self.blocks = nn.Sequential(*[Block(dim) for _ in range(depth)])
             self.norm = nn.LayerNorm(dim)
             # 多尺度特征（浅层细节 + 深层语义）→ 简化refine
@@ -68,7 +68,7 @@ def build_model():
         def forward(self, x):
             B, _, H, W = x.shape
             t = self.norm(self.blocks(self.embed(x)))
-            fmap = t.transpose(1, 2).reshape(B, -1, H // 8, W // 8)   # [B,dim,32,32]
+            fmap = t.transpose(1, 2).reshape(B, -1, H // 16, W // 16)  # [B,dim,16,16] (2核CPU: token 1024→256)
             d = self.refine(fmap)                                      # [B,1,32,32]
             return torch.nn.functional.interpolate(d, size=(H, W), mode="bilinear", align_corners=False)
 
@@ -99,9 +99,9 @@ def load_batch(paths):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--epochs", type=int, default=8)
-    ap.add_argument("--batch", type=int, default=16)
-    ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--epochs", type=int, default=3)
+    ap.add_argument("--batch", type=int, default=8)
+    ap.add_argument("--limit", type=int, default=2000)
     args = ap.parse_args()
 
     import torch
@@ -137,7 +137,7 @@ def main():
             opt.zero_grad()
             loss.backward()
             opt.step()
-            tot += float(loss) * len(idx)
+            tot += float(loss.detach()) * len(idx)
         sched.step()
         model.eval()
         with torch.no_grad():

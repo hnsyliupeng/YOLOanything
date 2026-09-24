@@ -37,18 +37,23 @@ try {
     checks.add(`vendor/${f} 存在`, fs.existsSync(path.join(REPO, 'app', 'vendor', 'ort', f)));
   }
 
-  /* 3. 真 UI 流程：点「加载模型」（检测+深度两个模型） */
+  /* 3. 真 UI 流程：点「加载模型」（检测先就绪，深度模型 99MB 稍后，等它加载完） */
   await page.click('#btn-load-models');
   const loaded = await page.waitForFunction(
     () => window.__AQUASCAN__?.state?.models?.loaded?.detect,
     { timeout: 90000, polling: 500 },
   ).then(() => true).catch(() => false);
+  // 深度模型在检测之后串行加载（99MB + wasm 编译），最长等 120s
+  await page.waitForFunction(
+    () => !!window.__AQUASCAN__?.depthSession,
+    { timeout: 120000, polling: 1000 },
+  ).catch(() => { });
   const loadInfo = await page.evaluate(() => ({
     detect: !!window.__AQUASCAN__?.detectSession,
     detectBackend: window.__AQUASCAN__?.detectSession?.backend,
     depth: !!window.__AQUASCAN__?.depthSession,
     depthBackend: window.__AQUASCAN__?.depthSession?.backend,
-    depthInput: window.__AQUASCAN__?.depthSession?.input,
+    depthInput: window.__AQUASCAN__?.depthSession?.in,
   }));
   checks.add('UI加载检测模型', loaded && loadInfo.detect, JSON.stringify(loadInfo));
   checks.add('UI加载深度模型(DAV2 INT8)', loadInfo.depth, `backend=${loadInfo.depthBackend} input=${loadInfo.depthInput}`);

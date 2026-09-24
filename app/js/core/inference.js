@@ -54,6 +54,7 @@ export class DetectSession {
   async load(modelId, manifest, { preferWebGPU = true } = {}) {
     const meta = manifest.models.find(m => m.id === modelId);
     if (!meta) throw new Error(`manifest 中无模型 ${modelId}`);
+    this._loadOpts = { modelId, manifest };      // 推理期降级重建用
     const o = await ensureOrt();
     const eps = [];
     if (preferWebGPU && navigator.gpu) eps.push('webgpu');
@@ -83,6 +84,22 @@ export class DetectSession {
    */
   async detect(source, { conf = 0.25, iou = 0.45, segOn = true } = {}) {
     const t0 = performance.now();
+    await ensureOrt();
+    try {
+      return await this._detectOnce(source, { conf, iou, segOn }, t0);
+    } catch (e) {
+      // WebGPU 会话可能在加载期正常创建、推理期才暴露 buffer/设备问题 → 降级 wasm 重试一次
+      const gpuErr = /createBuffer|GPU|webgpu|WebGPU/i.test(String(e?.message || e));
+      if (gpuErr && this.backend === 'webgpu' && this._loadOpts) {
+        logger.warn('[Infer] WebGPU 推理失败，降级 WASM 重试:', String(e?.message || e).slice(0, 90));
+        await this.load(this._loadOpts.modelId, this._loadOpts.manifest, { preferWebGPU: false });
+        return await this._detectOnce(source, { conf, iou, segOn }, t0);
+      }
+      throw e;
+    }
+  }
+
+  async _detectOnce(source, { conf, iou, segOn }, t0) {
     await ensureOrt();
     const { tensor, scale, dx, dy, srcW, srcH } = this._preprocess(source);
     const feeds = { [this.session.inputNames[0]]: tensor };

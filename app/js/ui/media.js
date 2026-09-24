@@ -103,8 +103,21 @@ export class MediaPipeline {
     ov.width = vc.width; ov.height = vc.height;
     vc.style.width = ov.style.width = vc.width + 'px';
     vc.style.height = ov.style.height = vc.height + 'px';
-    const g = vc.getContext('2d');
+    // willReadFrequently → 软件后备存储：规避部分环境(SwiftShader)加速2d表面图像绘制全黑的缺陷
+    const g = vc.getContext('2d', { willReadFrequently: true });
     g.drawImage(bmp, 0, 0, vc.width, vc.height);
+    // 环境自愈：校验中心像素，异常(全透明/全黑)则重建元素重画一次
+    try {
+      const p = g.getImageData(vc.width >> 1, vc.height >> 1, 1, 1).data;
+      if (p[3] === 0 || (p[0] + p[1] + p[2] === 0)) {
+        const fresh = vc.cloneNode(false);
+        vc.replaceWith(fresh);
+        this.mediaCanvas = fresh;
+        const g2 = fresh.getContext('2d', { willReadFrequently: true });
+        g2.drawImage(bmp, 0, 0, fresh.width, fresh.height);
+        logger.warn('[Media] 检测到画布黑表面，已重建画布元素');
+      }
+    } catch { /* 非致命 */ }
     ov.getContext('2d').clearRect(0, 0, ov.width, ov.height);
     setResolutionChipSafe(vc.width, vc.height);
   }

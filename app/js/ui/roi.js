@@ -20,7 +20,7 @@ function ensureCanvas() {
   const stack = document.getElementById('canvas-stack');
   roiCanvas = document.createElement('canvas');
   roiCanvas.id = 'roi-canvas';
-  roiCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;';
+  roiCanvas.style.cssText = 'pointer-events:none;z-index:5;';   // 几何由 syncSize 镜像媒体画布（stack 的居中规则同样适用）
   stack.appendChild(roiCanvas);
   syncSize();
   return roiCanvas;
@@ -28,12 +28,17 @@ function ensureCanvas() {
 
 function syncSize() {
   if (!roiCanvas) return;
-  const stack = document.getElementById('canvas-stack');
-  const w = stack.clientWidth || 0, h = stack.clientHeight || 0;
-  if (w && h && (roiCanvas.width !== w || roiCanvas.height !== h)) {
+  // 与媒体画布同尺寸（ROI 归一化坐标基于图像，而非整个 stack）
+  const mc = document.getElementById('media-canvas');
+  const ov = document.getElementById('overlay-canvas');
+  const ref = (mc && mc.width > 16) ? mc : ov;
+  const w = ref?.width ?? 16, h = ref?.height ?? 9;
+  if (roiCanvas.width !== w || roiCanvas.height !== h) {
     roiCanvas.width = w; roiCanvas.height = h;
-    paint();                       // 尺寸变化后按归一化坐标重画
+    roiCanvas.style.width = ref?.style.width || '';
+    roiCanvas.style.height = ref?.style.height || '';
   }
+  paint();                       // 尺寸变化后按归一化坐标重画
 }
 
 /** 归一化 region → 像素矩形（当前画布尺寸） */
@@ -146,9 +151,9 @@ export function initROI() {
 
   // 画布尺寸变化时保持 ROI 对位
   new ResizeObserver(() => syncSize()).observe(stack);
-  // 新图像/清空时：ROI 选区保留，但拖拽态清理
-  bus.on('media:loaded', () => paint());
-  bus.on('media:clear', () => { drag = null; paint(); });
+  // 新图像/清空时：ROI 选区保留，但几何重对位
+  bus.on('media:loaded', () => syncSize());
+  bus.on('media:clear', () => { drag = null; syncSize(); });
 
   logger.ok('[ROI] 模块就绪');
 }

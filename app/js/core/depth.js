@@ -25,7 +25,8 @@ export class DepthSession {
   constructor() { this.session = null; this.backend = null; this.input = 256; }
 
   async load(preferWebGPU = true, filePath = './models/depth-lite-256.onnx', { inputSize = 256, norm = null } = {}) {
-    this.input = inputSize;
+    this._src = filePath;           // 推理期降级重建用
+    this.in = inputSize;
     this.norm = norm;               // 'imagenet'：官方DAV2期望 ImageNet 归一化输入
     const ort = await import(ORT_BASE + 'ort.all.bundle.min.mjs');
     this.ort = ort;
@@ -66,7 +67,17 @@ export class DepthSession {
     }
     const tensor = new this.ort.Tensor('float32', f, [1, 3, this.in, this.in]);
     const t0 = performance.now();
-    const out = await this.session.run({ [this.session.inputNames[0]]: tensor });
+    let out;
+    try {
+      out = await this.session.run({ [this.session.inputNames[0]]: tensor });
+    } catch (e) {
+      // WebGPU 会话可能在加载期正常创建、推理期才暴露 buffer/设备问题 → 重建 wasm 会话重试一次
+      if (/createBuffer|GPU|webgpu|WebGPU/i.test(String(e?.message || e)) && this.backend === 'webgpu') {
+        logger.warn('[Depth] WebGPU 推理失败，降级 WASM 重试');
+        await this.load(false, this._src, { inputSize: this.in, norm: this.norm });
+        out = await this.session.run({ [this.session.inputNames[0]]: tensor });
+      } else throw e;
+    }
     const ms = performance.now() - t0;
     const d = Object.values(out)[0];
     const dims = d.dims;                       // [1,H,W] 或 [1,1,H,W]

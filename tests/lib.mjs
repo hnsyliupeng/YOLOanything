@@ -87,11 +87,13 @@ export async function launchBrowser({ width = 1600, height = 900 } = {}) {
   const browser = await puppeteer.launch({
     args: [
       '--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu-sandbox', '--no-zygote',
+      '--disable-accelerated-2d-canvas',   // SwiftShader下部分canvas元素2d表面损坏(图像绘制全黑),强制软栅格
       '--enable-unsafe-webgpu', '--use-gl=angle', '--use-angle=swiftshader', '--use-vulkan',
       '--hide-scrollbars', '--mute-audio', '--force-color-profile=srgb',
     ],
     executablePath: '/tmp/chr/chromium',
     headless: true,
+    protocolTimeout: 300000,
     defaultViewport: { width, height },
     env: {
       ...process.env,
@@ -190,5 +192,38 @@ export async function checkLayoutGeometry(page) {
       if (r.right > vw + 2 || r.left < -2) issues.push(`${sel} 横向越界 left=${r.left} right=${r.right} vw=${vw}`);
     }
     return { issues, viewport: { vw, vh } };
+  });
+}
+
+/**
+ * 画布扁平化截图辅助：把媒体/叠加/ROI 画布经 drawImage 合成为 <img> 覆盖层，
+ * 规避 SwiftShader headless 下加速 2d 层合成读回黑屏的缺陷（真机 Chrome 不受影响）。
+ */
+export async function flattenView(page) {
+  await page.evaluate(async () => {
+    const busy = async () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await busy();
+    await new Promise(r => setTimeout(r, 250));
+    const mc = document.getElementById('media-canvas');
+    const ov = document.getElementById('overlay-canvas');
+    const roi = document.getElementById('roi-canvas');
+    if (!mc) return;
+    document.getElementById('shot-flat')?.remove();
+    const flat = document.createElement('canvas');
+    flat.width = mc.width; flat.height = mc.height;
+    const g = flat.getContext('2d');
+    for (const c of [mc, ov, roi]) {
+      if (c && c.width === flat.width && c.height === flat.height) {
+        try { g.drawImage(c, 0, 0); } catch { /* 忽略 */ }
+      }
+    }
+    const img = document.createElement('img');
+    img.id = 'shot-flat';
+    img.src = flat.toDataURL('image/png');
+    const cr = mc.getBoundingClientRect();
+    img.style.cssText = `position:fixed;left:${cr.left}px;top:${cr.top}px;width:${cr.width}px;height:${cr.height}px;z-index:9999;pointer-events:none;`;
+    document.body.appendChild(img);
+    await new Promise(r => { img.onload = r; setTimeout(r, 800); });
+    await busy();
   });
 }
